@@ -1,7 +1,15 @@
+// diagnostics utility header
+
 #pragma once
 #include "types.h"
 
 namespace utility {
+	/**
+	 * \brief Calculates how many digits a number has.
+	 * \tparam type Number type
+	 * \param number Number to check
+	 * \return Number of digits the number has.
+	 */
 	template <class type>
 	auto num_digits(type number) -> u8 {
 		u8 digits = 0;
@@ -16,28 +24,54 @@ namespace utility {
 
 	class console {
 	public:
+		/**
+		 * \brief Prints \b message to stdout.
+		 * \param message Message to print
+		 */
 		static void print(const std::string& message) {
 			std::cout << message;
 		}
 
+		/**
+		 * \brief Prints \b args formatted using \b fmt to stdout.
+		 * \tparam arguments Argument types.
+		 * \param fmt Format string to use. 
+		 * \param args Arguments to print.
+		 */
 		template<typename... arguments>
 		static void print(std::format_string<arguments...> fmt, arguments&&... args) {
 			std::cout << format_str(std::move(fmt), std::forward<arguments>(args)...);
 		}
 
+		/**
+		 * \brief Prints \b message to stderr.
+		 * \param message Message to print
+		 */
 		static void printerr(const std::string& message) {
 			std::cerr << message;
 		}
 
+		/**
+		 * \brief Prints \b args formatted using \b fmt to stderr.
+		 * \tparam arguments Argument types.
+		 * \param fmt Format string to use.
+		 * \param args Arguments to print.
+		 */
 		template<typename... arguments>
 		static void printerr(std::format_string<arguments...> fmt, arguments&&... args) {
 			std::cerr << format_str(std::move(fmt), std::forward<arguments>(args)...);
 		}
 
+		/**
+		 * \brief Flushes stdout.
+		 */
 		static void flush() {
 			std::cout << std::flush;
 		}
 
+		/**
+		 * \brief Flushes stderr.
+		 */
 		static void errflush() {
 			std::cerr << std::flush;
 		}

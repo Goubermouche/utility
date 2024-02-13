@@ -1,18 +1,20 @@
+// stack utility header
+
 #pragma once
-#include "contiguous_buffer.h"
+#include "../memory/memory_buffer.h"
 
 namespace utility {
 	template<typename type>
-	class stack : public contiguous_buffer<type> {
+	class stack : public memory_buffer<type> {
 	public:
 		stack()
-			: contiguous_buffer<type>() {}
+			: memory_buffer<type>() {}
 
 		stack(const std::initializer_list<type>& initializer_list)
-			: contiguous_buffer<type>(initializer_list) {}
+			: memory_buffer<type>(initializer_list) {}
 
-		stack(const contiguous_buffer<type>& container)
-			: contiguous_buffer<type>(container) {}
+		stack(const memory_buffer<type>& container)
+			: memory_buffer<type>(container) {}
 
 		[[nodiscard]] constexpr auto pop_back() -> type& {
 			return this->m_data[--this->m_size];

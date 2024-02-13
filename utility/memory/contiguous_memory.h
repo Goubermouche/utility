@@ -1,26 +1,20 @@
+// contiguous_memory utility header
+
 #pragma once
-#include "../macros.h"
+#include "memory.h"
 
 namespace utility {
 	template<typename type, typename size_type = u64>
-	class slice {
+	class contiguous_memory {
 	public:
-		using element_type = type;
+		// iterators
 		using iterator = type*;
 		using const_iterator = const type*;
 		using reverse_iterator = std::reverse_iterator<iterator>;
 		using const_reverse_iterator = std::reverse_iterator<const_iterator>;
 
-		slice() = default;
-		slice(void* data, size_type size) :
-			m_data(static_cast<type*>(data)), m_size(size) {}
-
-		slice(type* data, size_type size) :
-			m_data(data), m_size(size) {}
-
-		template<typename allocator>
-		slice(allocator& alloc, size_type count) :
-			m_data(static_cast<type*>(alloc.allocate_zero(sizeof(type)* count))), m_size(count) {}
+		contiguous_memory() : m_data(nullptr), m_size(0) {}
+		contiguous_memory(type* data, size_type size) : m_data(data), m_size(size) {}
 
 		[[nodiscard]] auto get_data() const -> type* {
 			return m_data;
@@ -30,32 +24,24 @@ namespace utility {
 			return m_size;
 		}
 
-		[[nodiscard]] auto is_empty() const -> bool {
-			return m_size == 0;
-		}
-
-		[[nodiscard]] auto first() const -> type {
-			return m_data[0];
-		}
-
-		[[nodiscard]] auto last() const -> type {
-			return m_data[m_size - 1];
+		[[nodiscard]] constexpr auto is_empty() const -> bool {
+			return this->m_size == 0;
 		}
 
 		[[nodiscard]] auto operator[](u64 index) -> type& {
-			return m_data[index];
+			return this->m_data[index];
 		}
 
 		[[nodiscard]] auto operator[](u64 index) const -> const type& {
-			return m_data[index];
+			return this->m_data[index];
 		}
 
 		[[nodiscard]] auto begin() -> iterator {
-			return m_data;
+			return this->m_data;
 		}
 
 		[[nodiscard]] auto begin() const -> const_iterator {
-			return m_data;
+			return this->m_data;
 		}
 
 		[[nodiscard]] auto rbegin() -> reverse_iterator {
@@ -67,11 +53,11 @@ namespace utility {
 		}
 
 		[[nodiscard]] auto end() const -> const_iterator {
-			return m_data + m_size;
+			return this->m_data + this->m_size;
 		}
 
 		[[nodiscard]] auto end() -> iterator {
-			return m_data + m_size;
+			return this->m_data + this->m_size;
 		}
 
 		[[nodiscard]] auto rend() -> reverse_iterator {
@@ -81,34 +67,26 @@ namespace utility {
 		[[nodiscard]] auto rend() const -> const_reverse_iterator {
 			return const_reverse_iterator(begin());
 		}
-
-		bool operator==(const slice& other) const {
-			if(m_size != other.m_size) {
-				return false;
-			}
-
-			for(size_type i = 0; i < m_size; ++i) {
-				if (m_data[i] != other.m_data[i]) {
-					return false;
-				}
-			}
-
-			return true;
-		}
 	protected:
 		type* m_data;
 		size_type m_size;
 	};
 
 	template<typename type, typename size_type = u64>
-	void copy(slice<type, size_type>& destination, const std::vector<type>& source) {
+	void copy(contiguous_memory<type, size_type>& destination, const std::vector<type>& source) {
 		ASSERT(destination.get_size() >= source.size(), "incompatible sizes");
 		std::memcpy(destination.get_data(), source.data(), source.size() * sizeof(type));
 	}
 
 	template<typename type, typename size_type = u64>
-	void copy(slice<type, size_type>& destination, u64 begin_offset, const std::vector<type>& source) {
+	void copy(contiguous_memory<type, size_type>& destination, u64 begin_offset, const std::vector<type>& source) {
 		ASSERT(destination.get_size() + begin_offset >= source.size(), "incompatible sizes");
 		std::memcpy(destination.get_data() + begin_offset, source.data(), source.size() * sizeof(type));
+	}
+
+	template<typename type, typename size_type = u64>
+	void copy(contiguous_memory<type, size_type>& destination, const contiguous_memory<type, size_type>& source) {
+		ASSERT(destination.get_size() >= source.get_size(), "incompatible sizes");
+		std::memcpy(destination.get_data(), source.get_data(), source.get_size() * sizeof(type));
 	}
 } // namespace utility

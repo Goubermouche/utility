@@ -1,24 +1,26 @@
+// byte buffer utility header
+
 #pragma once
-#include "contiguous_buffer.h"
-#include "../memory.h"
+#include "../memory/memory_buffer.h"
+#include "../memory/memory.h"
 
 namespace utility {
 	/**
 	 * \brief Simple abstraction for a list of bytes. Provides basic quality of life
 	 * features such as resolving relocations and iterators.
 	 */
-	class byte_buffer : public contiguous_buffer<byte> {
+	class byte_buffer : public memory_buffer<byte> {
 	public:
 		byte_buffer() = default;
 
-		byte_buffer(const contiguous_buffer& container)
-			: contiguous_buffer(container) {}
+		byte_buffer(const memory_buffer& container)
+			: memory_buffer(container) {}
 
-		byte_buffer(const slice<byte>& slice)
-			: contiguous_buffer(slice.get_size(), slice.get_data()) {}
+		byte_buffer(const memory_view<byte>& slice)
+			: memory_buffer(slice.get_size(), slice.get_data()) {}
 
 		byte_buffer(u64 size)
-			: contiguous_buffer(size) {}
+			: memory_buffer(size) {}
 
 		auto operator[](u64 index) const -> const byte& {
 			return m_data[index];
@@ -41,7 +43,6 @@ namespace utility {
 		 * \param data Data to append
 		 */
 		void append_byte(u8 data) {
-			// ASSERT(data != 0x06, "x");
 			push_back(data);
 		}
 
@@ -52,8 +53,6 @@ namespace utility {
 		void append_word(u16 data) {
 			byte bytes[2];
 			std::memcpy(bytes, &data, sizeof(data));
-			// ASSERT(data != 0x06, "x");
-			// ASSERT(data != 0x06, "x");
 			push_back(bytes[0]);
 			push_back(bytes[1]);
 		}
@@ -66,7 +65,6 @@ namespace utility {
 			byte bytes[4];
 			std::memcpy(bytes, &data, sizeof(data));
 			for (int i = 0; i < 4; ++i) {
-				// ASSERT(bytes[i] != 0x06, "x");
 				push_back(bytes[i]);
 			}
 		}
@@ -79,7 +77,6 @@ namespace utility {
 			byte bytes[8];
 			std::memcpy(bytes, &data, sizeof(data));
 			for (int i = 0; i < 8; ++i) {
-				// ASSERT(bytes[i] != 0x4d, "x");
 				push_back(bytes[i]);
 			}
 		}
@@ -101,7 +98,7 @@ namespace utility {
 		 */
 		void append_zero(u64 count) {
 			reserve(m_size + count);
-			memset(m_data + m_size, 0, count);
+			memset(m_data + m_size, 0, static_cast<size_t>(count));
 			m_size += count;
 		}
 

@@ -1,54 +1,55 @@
+// memory_buffer utility header
+
 #pragma once
+#include "memory_view.h"
 #include "../macros.h"
-#include "slice.h"
 
 namespace utility {
-	template<typename type>
-	class contiguous_buffer {
+	/**
+	 * \brief Owning buffer of memory (basically an std::vector)
+	 * \tparam type 
+	 */
+	template<typename type, typename size_type = u64>
+	class memory_buffer : public contiguous_memory<type, size_type> {
 	public:
-		constexpr contiguous_buffer()
-			: m_owning(true), m_data(nullptr), m_size(0), m_capacity(0) {}
+		using element_type = type;
+		using base_type = contiguous_memory<type, u64>;
 
-		constexpr contiguous_buffer(u64 size)
-			: m_owning(true), m_data(allocate(size)), m_size(size), m_capacity(size) {}
+		constexpr memory_buffer() : m_capacity(0) {}
+		constexpr memory_buffer(u64 size) : base_type(allocate(size), size), m_capacity(size) {}
+		constexpr memory_buffer(u64 size, type* data) : base_type(data, size), m_capacity(size) {}
 
-		constexpr contiguous_buffer(u64 size, type* data)
-			: m_owning(false), m_data(data), m_size(size), m_capacity(size) {}
-
-		constexpr contiguous_buffer(std::initializer_list<type> initializer_list)
-			: m_owning(true), m_data(allocate(initializer_list.size())), m_size(initializer_list.size()), m_capacity(m_size) {
-			std::uninitialized_copy(initializer_list.begin(), initializer_list.end(), m_data);
+		constexpr memory_buffer(std::initializer_list<type> initializer_list)
+		: base_type(allocate(initializer_list.size()), m_size(initializer_list.size())), m_capacity(this->m_size) {
+			std::uninitialized_copy(initializer_list.begin(), initializer_list.end(), this->m_data);
 		}
 
-		contiguous_buffer(const contiguous_buffer& other)
-			: m_owning(true), m_size(other.m_size), m_capacity(other.m_capacity) {
-			m_data = static_cast<type*>(std::malloc(m_capacity * sizeof(type)));
-			std::memcpy(m_data, other.m_data, m_capacity * sizeof(type));
+		memory_buffer(const memory_buffer& other)
+		: base_type(nullptr, other.m_size), m_capacity(other.m_capacity) {
+			this->m_data = static_cast<type*>(utility::malloc(m_capacity * sizeof(type)));
+			std::memcpy(this->m_data, other.m_data, m_capacity * sizeof(type));
 		}
 
-		contiguous_buffer& operator=(const contiguous_buffer& other) {
+		auto operator=(const memory_buffer& other) -> memory_buffer& {
 			if(&other == this) {
 				return *this;
 			}
 
-			m_owning = true;
-			m_size = other.m_size;
+			this->m_size = other.m_size;
 			m_capacity = other.m_capacity;
-			m_data = static_cast<type*>(std::malloc(m_capacity * sizeof(type)));
-			std::memcpy(m_data, other.m_data, m_capacity * sizeof(type));
+			this->m_data = static_cast<type*>(utility::malloc(m_capacity * sizeof(type)));
+			std::memcpy(this->m_data, other.m_data, m_capacity * sizeof(type));
 
 			return *this;
 		}
 
-		constexpr ~contiguous_buffer() {
-			if (m_owning) {
-				if (!std::is_trivial_v<type>) {
-					destruct_range(begin(), end());
-				}
-
-				std::free(m_data);
-				m_data = nullptr;
+		constexpr ~memory_buffer() {
+			if(!std::is_trivial_v<type>) {
+				destruct_range(this->begin(), this->end());
 			}
+
+			utility::free(this->m_data);
+			this->m_data = nullptr;
 		}
 
 		/**
@@ -56,8 +57,8 @@ namespace utility {
 		 * \param size Target container size
 		 * \return 0-filled contiguous container of the specified \b size.
 		 */
-		[[nodiscard]] static contiguous_buffer zero_initialize(u64 size) {
-			const contiguous_buffer container(size);
+		[[nodiscard]] static auto create_zero(u64 size) -> memory_buffer {
+			const memory_buffer container(size);
 			container.zero_fill();
 			return container;
 		}
@@ -67,8 +68,8 @@ namespace utility {
 		 * \param capacity Target container capacity
 		 * \return Pre-reserved contiguous container.
 		 */
-		[[nodiscard]] static contiguous_buffer reserve_initialize(u64 capacity) {
-			contiguous_buffer container;
+		[[nodiscard]] static auto create_reserve(u64 capacity) -> memory_buffer {
+			memory_buffer container;
 			container.reserve(capacity);
 			return container;
 		}
@@ -77,24 +78,16 @@ namespace utility {
 		 * \brief Resizes the container to 0 and fills all used space with 0's.
 		 */
 		constexpr void clear() {
-			m_size = 0;
+			this->m_size = 0;
 			zero_fill();
-		}
-
-		/**
-		 * \brief Checks if the container is empty.
-		 * \return True if the container is empty, false otherwise.
-		 */
-		[[nodiscard]] constexpr  auto empty() const -> bool {
-			return m_size == 0;
 		}
 
 		/**
 		 * \brief 0-fills the entire container.
 		 */
 		constexpr void zero_fill() const {
-			if(m_data) {
-				std::memset(m_data, 0, m_size * sizeof(type));
+			if(this->m_data) {
+				std::memset(this->m_data, 0, this->m_size * sizeof(type));
 			}
 		}
 
@@ -102,20 +95,19 @@ namespace utility {
 		 * \brief Appends \b value to the end of the container.
 		 * \param value Value to append
 		 */
-		void push_back(const type& value)
-		{
-			if (m_size == m_capacity) {
+		void push_back(const type& value) {
+			if (this->m_size == m_capacity) {
 				grow();
 			}
 
 			if constexpr (std::is_trivial_v<type>) {
-				m_data[m_size] = value;
+				this->m_data[this->m_size] = value;
 			}
 			else {
-				new (m_data + m_size) type(value);
+				new (this->m_data + this->m_size) type(value);
 			}
 
-			m_size++;
+			this->m_size++;
 		}
 
 		/**
@@ -123,20 +115,18 @@ namespace utility {
 		 * \param value Value to append
 		 */
 		constexpr void push_back(type&& value) {
-			ASSERT(m_owning, "non-owning container cannot change the memory layout");
-
-			if (m_size == m_capacity) {
+			if (this->m_size == m_capacity) {
 				grow();
 			}
 
 			if constexpr (std::is_trivial_v<type>) {
-				m_data[m_size] = value;
+				this->m_data[this->m_size] = value;
 			}
 			else {
-				 new (m_data + m_size) type(std::move(value));
+				new (this->m_data + this->m_size) type(std::move(value));
 			}
 
-			m_size++;
+			this->m_size++;
 		}
 
 		/**
@@ -147,19 +137,17 @@ namespace utility {
 		 */
 		template<typename... arg_types>
 		constexpr void emplace_back(arg_types&&... args) {
-			ASSERT(m_owning, "non-owning container cannot change the memory layout");
-
 			static_assert(
 				!std::is_trivial_v<type>, 
 				"use push_back() instead of emplace_back() with trivial types"
 			);
 
-			if (m_size == m_capacity) {
+			if (this->m_size == m_capacity) {
 				grow();
 			}
 
-			new (m_data + m_size) type(std::forward<arg_types>(args)...);
-			m_size++;
+			new (this->m_data + this->m_size) type(std::forward<arg_types>(args)...);
+			this->m_size++;
 		}
 
 		/**
@@ -169,31 +157,30 @@ namespace utility {
 		 * \param end End of the inserted range
 		 */
 		constexpr void insert(type* where, const type* start, const type* end) {
-			ASSERT(m_owning, "non-owning container cannot change the memory layout");
 			const u64 elements_to_insert = end - start;
 
 			if (elements_to_insert == 0) {
 				return;
 			}
 
-			u64 insert_index = where - m_data;
+			u64 insert_index = where - this->m_data;
 
-			if (m_size + elements_to_insert > m_capacity) {
-				reserve(m_size + elements_to_insert);
+			if (this->m_size + elements_to_insert > m_capacity) {
+				reserve(this->m_size + elements_to_insert);
 
 				// update where after reserve as it might have changed
-				where = m_data + insert_index;
+				where = this->m_data + insert_index;
 			}
 
 			// move existing elements to make space for new elements
-			if (m_size > insert_index) {
+			if (this->m_size > insert_index) {
 				if constexpr (std::is_trivially_move_constructible_v<type> && std::is_trivially_destructible_v<type>) {
-					std::memmove(where + elements_to_insert, where, (m_size - insert_index) * sizeof(type));
+					std::memmove(where + elements_to_insert, where, (this->m_size - insert_index) * sizeof(type));
 				}
 				else {
-					for (u64 i = m_size; i > insert_index; --i) {
-						new (m_data + i + elements_to_insert - 1) type(std::move(m_data[i - 1]));
-						m_data[i - 1].~type();
+					for (u64 i = this->m_size; i > insert_index; --i) {
+						new (this->m_data + i + elements_to_insert - 1) type(std::move(this->m_data[i - 1]));
+						this->m_data[i - 1].~type();
 					}
 				}
 			}
@@ -208,7 +195,7 @@ namespace utility {
 				}
 			}
 
-			m_size += elements_to_insert;
+			this->m_size += elements_to_insert;
 		}
 
 		/**
@@ -217,49 +204,33 @@ namespace utility {
 		 * \param source_end End of the source range
 		 */
 		constexpr void append(const type* source_begin, const type* source_end) {
-			insert(end(), source_begin, source_end);
+			insert(this->end(), source_begin, source_end);
 		}
 
 		/**
 		 * \brief Appends a contiguous container to the end of this container.
 		 * \param other Container to append
 		 */
-		constexpr void append(const contiguous_buffer& other) {
-			insert(end(), other.begin(), other.end());
+		constexpr void append(const memory_buffer& other) {
+			insert(this->end(), other.begin(), other.end());
 		}
 
 		/**
 		 * \brief Prepends a contiguous container to the beginning of this container.
 		 * \param other Container to prepend
 		 */
-		constexpr void prepend(const contiguous_buffer& other) {
-			insert(begin(), other.begin(), other.end());
-		}
-
-		type& operator[](u64 index) {
-			return m_data[index];
-		}
-
-		const type& operator[](u64 index) const {
-			return m_data[index];
+		constexpr void prepend(const memory_buffer& other) {
+			insert(this->begin(), other.begin(), other.end());
 		}
 
 		/**
-		 * \brief Creates a non-owning slice/view of this container.
-		 * \param start Start of the slice
-		 * \param size Size of the slice
-		 * \return Slice beginning at \b start with the specified \b size.
+		 * \brief Creates a non-owning view/view of this container.
+		 * \param start Start of the view
+		 * \param size Size of the view
+		 * \return view beginning at \b start with the specified \b size.
 		 */
-		[[nodiscard]] constexpr auto get_slice(u64 start, u64 size) const -> slice<type> {
-			return { m_data + start, size };
-		}
-
-		/**
-		 * \brief Retrieves the current size of the container.
-		 * \return Size of the container
-		 */
-		[[nodiscard]] constexpr auto get_size() const -> u64 {
-			return m_size;
+		[[nodiscard]] constexpr auto get_view(u64 start, u64 size) const -> memory_view<type> {
+			return { this->m_data + start, size };
 		}
 
 		/**
@@ -267,7 +238,7 @@ namespace utility {
 		 * \param new_size New size of the container
 		 */
 		constexpr void set_size(u64 new_size) {
-			m_size = new_size;
+			this->m_size = new_size;
 		}
 
 		/**
@@ -278,29 +249,13 @@ namespace utility {
 			return m_capacity;
 		}
 
-		[[nodiscard]] constexpr auto begin() -> type* {
-			return m_data;
-		}
-
-		[[nodiscard]] constexpr auto begin() const -> const type* {
-			return m_data;
-		}
-
-		[[nodiscard]] constexpr auto end() -> type* {
-			return m_data + m_size;
-		}
-
-		[[nodiscard]] constexpr auto end() const -> const type* {
-			return m_data + m_size;
-		}
-
 		/**
 		 * \brief Retrieves the first element in the container.
 		 * \return First element in the container
 		 */
 		[[nodiscard]] constexpr auto first() const -> const type& {
-			ASSERT(m_data != nullptr && m_size > 0, "first() used on an uninitialized container");
-			return m_data[0];
+			ASSERT(this->m_data != nullptr && this->m_size > 0, "first() used on an uninitialized container");
+			return this->m_data[0];
 		}
 
 		/**
@@ -308,8 +263,8 @@ namespace utility {
 		 * \return Last element in the container
 		 */
 		[[nodiscard]] constexpr auto last() const -> const type& {
-			ASSERT(m_data != nullptr && m_size > 0, "last() used on an uninitialized container");
-			return m_data[m_size - 1];
+			ASSERT(this->m_data != nullptr && this->m_size > 0, "last() used on an uninitialized container");
+			return this->m_data[this->m_size - 1];
 		}
 
 		/**
@@ -317,25 +272,23 @@ namespace utility {
 		 * \param capacity Number of elements to reserve space for
 		 */
 		constexpr void reserve(u64 capacity) {
-			ASSERT(m_owning, "non-owning container cannot change the memory layout");
-
 			if(m_capacity > capacity) {
 				return;
 			}
 
 			if constexpr (std::is_trivial_v<type>) {
-				m_data = static_cast<type*>(std::realloc(m_data, sizeof(type) * capacity));
-				ASSERT(m_data != nullptr, "reallocation failed");
+				this->m_data = static_cast<type*>(std::realloc(this->m_data, sizeof(type) * capacity));
+				ASSERT(this->m_data != nullptr, "reallocation failed");
 			}
 			else {
-				type* new_data = static_cast<type*>(std::malloc(sizeof(type) * capacity));
+				type* new_data = static_cast<type*>(utility::malloc(sizeof(type) * capacity));
 				ASSERT(new_data != nullptr, "allocation failed");
 
-				copy_range(begin(), end(), new_data);
-				destruct_range(begin(), end());
+				copy_range(this->begin(), this->end(), new_data);
+				destruct_range(this->begin(), this->end());
 
-				std::free(m_data);
-				m_data = new_data;
+				utility::free(this->m_data);
+				this->m_data = new_data;
 			}
 
 			m_capacity = capacity;
@@ -347,23 +300,22 @@ namespace utility {
 		 * \param size Size to resize to
 		 */
 		constexpr void resize(u64 size) {
-			ASSERT(m_owning, "non-owning container cannot change the memory layout");
-			ASSERT(size != m_size, "size is already equal to the passed value");
+			ASSERT(this->size != this->m_size, "size is already equal to the passed value");
 
 			if (size > m_capacity) {
 				reserve(size);
 			}
 
 			if constexpr (!std::is_trivial_v<type>) {
-				if (size > m_size) {
-					construct_range(m_data + m_size, m_data + size);
+				if (size > this->m_size) {
+					construct_range(this->m_data + this->m_size, this->m_data + size);
 				}
 				else {
-					destruct_range(m_data + size, m_data + m_size);
+					destruct_range(this->m_data + size, this->m_data + this->m_size);
 				}
 			}
 
-			m_size = size;
+			this->m_size = size;
 		}
 
 		/**
@@ -373,37 +325,36 @@ namespace utility {
 		 * \param value Value to fill the new elements with
 		 */
 		constexpr void resize(u64 size, const type& value) {
-			ASSERT(m_owning, "non-owning container cannot change the memory layout");
-			ASSERT(size != m_size, "size is already equal to the passed value");
+			ASSERT(size != this->m_size, "size is already equal to the passed value");
 
 			if (size > m_capacity) {
 				reserve(size);
 			}
 
 			if constexpr (!std::is_trivial_v<type>) {
-				if (size > m_size) {
-					for (auto p = m_data + m_size; p != m_data + size; ++p) {
+				if (size > this->m_size) {
+					for (auto p = this->m_data + this->m_size; p != this->m_data + size; ++p) {
 						new (p) type(value); // Construct each new element with the given value
 					}
 				}
 				else {
-					destruct_range(m_data + size, m_data + m_size);
+					destruct_range(this->m_data + size, this->m_data + this->m_size);
 				}
 			}
 			else {
-				if (size > m_size) {
-					std::fill(m_data + m_size, m_data + size, value);
+				if (size > this->m_size) {
+					std::fill(this->m_data + this->m_size, this->m_data + size, value);
 				}
 			}
 
-			m_size = size;
+			this->m_size = size;
 		}
 	protected:
 		static type* allocate(u64 count) {
-			return static_cast<type*>(std::malloc(count * sizeof(type)));
+			return static_cast<type*>(utility::malloc(count * sizeof(type)));
 		}
+
 		void grow() {
-			ASSERT(m_owning, "non-owning container cannot change the memory layout");
 			reserve(m_capacity * 2 + 1);
 		}
 
@@ -429,9 +380,6 @@ namespace utility {
 			}
 		}
 	protected:
-		bool m_owning;
-		type* m_data;
-		u64 m_size;
 		u64 m_capacity;
 	};
 } // namespace utility

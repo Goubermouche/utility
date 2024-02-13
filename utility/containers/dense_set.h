@@ -1,3 +1,5 @@
+// dense set utility header
+
 #pragma once
 #include "../macros.h"
 

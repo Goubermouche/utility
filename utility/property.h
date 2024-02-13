@@ -1,9 +1,15 @@
+// property utility header
+
 #pragma once
 #include "handle.h"
 
 namespace utility {
 	struct empty_property {};
 
+	/**
+	 * \brief Represents a single property from \b properties.
+	 * \tparam properties Property types
+	 */
 	template<typename... properties>
 	class property {
 	public:

@@ -1,5 +1,7 @@
+// memory utility header
+
 #pragma once
-#include "diagnostics.h"
+#include "../macros.h"
 
 namespace utility {
 	struct byte {
@@ -40,6 +42,14 @@ namespace utility {
 
 		u8 value;
 	};
+
+	[[nodiscard]] inline auto malloc(u64 count) -> void* {
+		return std::malloc(static_cast<size_t>(count));
+	}
+
+	inline void free(void* ptr) {
+		std::free(ptr);
+	}
 
 	/**
 	 * \brief Aligns the specified \a value into blocks of the specified width.

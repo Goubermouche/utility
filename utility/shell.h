@@ -1,3 +1,5 @@
+// shell utility header
+
 #pragma once
 #include "macros.h"
 

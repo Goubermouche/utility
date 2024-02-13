@@ -1,3 +1,5 @@
+// macros utility header
+
 #pragma once
 #include "diagnostics.h"
 

@@ -1,13 +1,20 @@
+// block_allocator utility header
+
 #pragma once
-#include "macros.h"
-#include "memory.h"
+#include "allocator_base.h"
+#include "../macros.h"
+#include "../memory/memory.h"
 
 namespace utility {
-	class block_allocator {
+	/**
+	 * \brief Block allocator, a slightly more advanced pool allocator which is capable
+	 * of growing. When a block is filled a new one is allocated.
+	 */
+	class block_allocator : allocator_base {
 		struct block {
 			block(u8* memory) : memory(memory), position(0) {}
 			~block() {
-				std::free(memory);
+				utility::free(memory);
 			}
 
 			u8* memory;
@@ -25,10 +32,13 @@ namespace utility {
 		}
 
 		~block_allocator() {
-			while (m_first_block) {
-				const block* temp = m_first_block;
+			// free all contained blocks
+			while(m_first_block) {
+				block* temp = m_first_block;
 				m_first_block = m_first_block->next;
-				delete temp;
+
+				temp->~block();
+				free(temp);
 			}
 		}
 
@@ -89,7 +99,7 @@ namespace utility {
 		 * \param size Amount of memory to allocate [bytes]
 		 * \return Pointer to the beginning of the allocated region.
 		 */
-		auto allocate(u64 size) -> void* {
+		[[nodiscard]] auto allocate(u64 size) -> void* {
 			ASSERT(size <= m_block_size, "insufficient block size for allocation of {}B", size);
 
 			if (size == 0) {
@@ -111,9 +121,9 @@ namespace utility {
 		 * \param size Amount of memory to allocate [bytes]
 		 * \return Pointer to the beginning of the allocated region.
 		 */
-		auto allocate_zero(u64 size) -> void* {
+		[[nodiscard]] auto allocate_zero(u64 size) -> void* {
 			void* memory = allocate(size);
-			std::memset(memory, 0, size);
+			std::memset(memory, 0, static_cast<size_t>(size));
 			return memory;
 		}
 
@@ -123,7 +133,7 @@ namespace utility {
 		 * \return Pointer to the allocated object.
 		 */
 		template<typename type>
-		auto allocate() -> type* {
+		[[nodiscard]] auto allocate() -> type* {
 			return static_cast<type*>(allocate(sizeof(type)));
 		}
 
@@ -133,7 +143,7 @@ namespace utility {
 		 * \return Pointer to the allocated object.
 		 */
 		template<typename type>
-		auto allocate_zero() -> type* {
+		[[nodiscard]] auto allocate_zero() -> type* {
 			return static_cast<type*>(allocate_zero(sizeof(type)));
 		}
 
@@ -143,7 +153,7 @@ namespace utility {
 		 * \return Pointer to the constructed object.
 		 */
 		template<typename type, typename... value_types>
-		auto emplace(value_types&&... values) -> type* {
+		[[nodiscard]] auto emplace(value_types&&... values) -> type* {
 			return new (allocate(sizeof(type))) type(std::forward<value_types>(values)...);
 		}
 
@@ -153,7 +163,7 @@ namespace utility {
 		 * \return Pointer to the constructed object.
 		 */
 		template<typename type, typename... value_types>
-		auto emplace_zero(value_types&&... values) -> type* {
+		[[nodiscard]] auto emplace_zero(value_types&&... values) -> type* {
 			return new (allocate_zero(sizeof(type))) type(std::forward<value_types>(values)...);
 		}
 
@@ -161,7 +171,7 @@ namespace utility {
 		 * \brief Retrieves the current amount of allocated blocks.
 		 * \return Count of currently allocated blocks.
 		 */
-		auto get_block_count() const -> u64 {
+		[[nodiscard]] auto get_block_count() const -> u64 {
 			return m_block_count;
 		}
 
@@ -169,7 +179,7 @@ namespace utility {
 		 * \brief Retrieves the max size of individual blocks [bytes].
 		 * \return Max size of individual blocks [bytes].
 		 */
-		auto get_block_size() const -> u64 {
+		[[nodiscard]] auto get_block_size() const -> u64 {
 			return m_block_size;
 		}
 	private:
@@ -177,7 +187,7 @@ namespace utility {
 		 * \brief Helper function for allocating new memory blocks
 		 */
 		void allocate_block() {
-			const auto memory = static_cast<u8*>(std::malloc(m_block_size));
+			const auto memory = static_cast<u8*>(utility::malloc(static_cast<size_t>(m_block_size)));
 			const auto new_block = new block(memory);
 
 			if (m_current_block) {

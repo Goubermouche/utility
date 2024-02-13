@@ -1,3 +1,5 @@
+// const_string utility header
+
 #pragma once
 #include "../types.h"
 

@@ -1,7 +1,94 @@
-// const_string utility header
+// string_view utility header
 
 #pragma once
-#include "../types.h"
+#include "../memory/contiguous_memory.h"
+#include "../allocators/allocator_base.h"
+
+namespace utility {
+	namespace detail {
+		template<typename char_type>
+		auto string_length(const char_type* ptr) -> u64 {
+			return static_cast<u64>(std::strlen(ptr));
+		}
+	} // namespace utility
+
+	/**
+	 * \brief A non-owning view of a sequence of characters. 
+	 * \tparam char_type Type of the character element
+	 * \tparam size_type Size type
+	 */
+	template<typename char_type = char, typename size_type = u64>
+	class string_view : public contiguous_memory<char_type, size_type> {
+	public:
+		using base_type = contiguous_memory<char_type, size_type>;
+
+		string_view() = delete;
+		string_view(char_type* str, size_type size) : base_type(str, size) {}
+
+		/**
+		 * \brief Constructs a string using the provided allocator
+		 * \tparam allocator Allocator type to use. Must derive from allocator_base.
+		 * \param alloc Allocator to use
+		 * \param str String to initialize with
+		 */
+		template<typename allocator>
+		requires is_allocator<allocator>
+		string_view(allocator& alloc, const char_type* str)
+			: base_type(nullptr, detail::string_length(str)) {
+			this->m_data = static_cast<char_type*>(alloc.allocate(this->m_size * sizeof(char_type)));
+			std::memcpy(this->m_data, str, this->m_size * sizeof(char_type));
+		}
+
+		/**
+		 * \brief Constructs a string using the provided std::string.
+		 * \tparam allocator Allocator type to use. Must derive from allocator_base.
+		 * \param alloc Allocator to use
+		 * \param str String to initialize with
+		 */
+		template<typename allocator>
+		requires is_allocator<allocator>
+		string_view(allocator& alloc, const std::basic_string<char_type>& str)
+			: base_type(nullptr, str.size()) {
+			this->m_data = static_cast<char_type*>(alloc.allocate(this->m_size * sizeof(char_type)));
+			std::memcpy(this->m_data, str.data(), this->m_size * sizeof(char_type));
+		}
+
+		auto operator==(const string_view& other) const -> bool {
+			if(this->m_size == other.m_size) {
+				if (this->m_data == other.m_data) {
+					return true;
+				}
+
+				// fall back to comparing the individual elements
+				for(size_type i = 0; i < this->m_size; ++i) {
+					if(this->m_data[i] != other.m_data[i]) {
+						return false;
+					}
+				}
+
+				return true;
+			}
+		
+			return false;
+		}
+
+		friend auto operator<<(std::ostream& os, const string_view& str) -> std::ostream& {
+			for(size_type i = 0; i < str.m_size; ++i) { os << str.m_data[i]; }
+			return os;
+		}
+
+		auto get_view(size_type start, size_type size) const -> string_view {
+			return { this->m_data + start, size };
+		}
+	};
+} // namespace utility
+
+template<typename char_type, typename size_type>
+struct std::formatter<utility::string_view<char_type, size_type>> : std::formatter<std::string> {
+	auto format(const utility::string_view<char_type, size_type>& str, format_context& ctx) const {
+		return std::format_to(ctx.out(), "{:.{}}", str.get_data(), str.get_size());
+	}
+};
 
 namespace utility {
 	/**

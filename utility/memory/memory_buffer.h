@@ -13,11 +13,11 @@ namespace utility {
 	class memory_buffer : public contiguous_memory<type, size_type> {
 	public:
 		using element_type = type;
-		using base_type = contiguous_memory<type, u64>;
+		using base_type = contiguous_memory<type, size_type>;
 
 		constexpr memory_buffer() : m_capacity(0) {}
-		constexpr memory_buffer(u64 size) : base_type(allocate(size), size), m_capacity(size) {}
-		constexpr memory_buffer(u64 size, type* data) : base_type(data, size), m_capacity(size) {}
+		constexpr memory_buffer(size_type size) : base_type(allocate(size), size), m_capacity(size) {}
+		constexpr memory_buffer(size_type size, type* data) : base_type(data, size), m_capacity(size) {}
 
 		constexpr memory_buffer(std::initializer_list<type> initializer_list)
 		: base_type(allocate(initializer_list.size()), m_size(initializer_list.size())), m_capacity(this->m_size) {
@@ -57,7 +57,7 @@ namespace utility {
 		 * \param size Target container size
 		 * \return 0-filled contiguous container of the specified \b size.
 		 */
-		[[nodiscard]] static auto create_zero(u64 size) -> memory_buffer {
+		[[nodiscard]] static auto create_zero(size_type size) -> memory_buffer {
 			const memory_buffer container(size);
 			container.zero_fill();
 			return container;
@@ -68,7 +68,7 @@ namespace utility {
 		 * \param capacity Target container capacity
 		 * \return Pre-reserved contiguous container.
 		 */
-		[[nodiscard]] static auto create_reserve(u64 capacity) -> memory_buffer {
+		[[nodiscard]] static auto create_reserve(size_type capacity) -> memory_buffer {
 			memory_buffer container;
 			container.reserve(capacity);
 			return container;
@@ -157,13 +157,13 @@ namespace utility {
 		 * \param end End of the inserted range
 		 */
 		constexpr void insert(type* where, const type* start, const type* end) {
-			const u64 elements_to_insert = end - start;
+			const size_type elements_to_insert = end - start;
 
 			if (elements_to_insert == 0) {
 				return;
 			}
 
-			u64 insert_index = where - this->m_data;
+			size_type insert_index = where - this->m_data;
 
 			if (this->m_size + elements_to_insert > m_capacity) {
 				reserve(this->m_size + elements_to_insert);
@@ -178,7 +178,7 @@ namespace utility {
 					std::memmove(where + elements_to_insert, where, (this->m_size - insert_index) * sizeof(type));
 				}
 				else {
-					for (u64 i = this->m_size; i > insert_index; --i) {
+					for (size_type i = this->m_size; i > insert_index; --i) {
 						new (this->m_data + i + elements_to_insert - 1) type(std::move(this->m_data[i - 1]));
 						this->m_data[i - 1].~type();
 					}
@@ -186,7 +186,7 @@ namespace utility {
 			}
 
 			// insert new elements
-			for (u64 i = 0; i < elements_to_insert; ++i) {
+			for (size_type i = 0; i < elements_to_insert; ++i) {
 				if constexpr (std::is_trivially_copyable_v<type>) {
 					where[i] = start[i];
 				}
@@ -229,7 +229,7 @@ namespace utility {
 		 * \param size Size of the view
 		 * \return view beginning at \b start with the specified \b size.
 		 */
-		[[nodiscard]] constexpr auto get_view(u64 start, u64 size) const -> memory_view<type> {
+		[[nodiscard]] constexpr auto get_view(size_type start, size_type size) const -> memory_view<type> {
 			return { this->m_data + start, size };
 		}
 
@@ -237,7 +237,7 @@ namespace utility {
 		 * \brief Updates the size of the container, \b does \b not \b actually \b change \b the \b memory.
 		 * \param new_size New size of the container
 		 */
-		constexpr void set_size(u64 new_size) {
+		constexpr void set_size(size_type new_size) {
 			this->m_size = new_size;
 		}
 
@@ -245,7 +245,7 @@ namespace utility {
 		 * \brief Retrieves the current capacity of the container.
 		 * \return Capacity of the container
 		 */
-		[[nodiscard]] constexpr auto get_capacity() const -> u64 {
+		[[nodiscard]] constexpr auto get_capacity() const -> size_type {
 			return m_capacity;
 		}
 
@@ -271,7 +271,7 @@ namespace utility {
 		 * \brief Reserve enough space for the specified \b capacity.
 		 * \param capacity Number of elements to reserve space for
 		 */
-		constexpr void reserve(u64 capacity) {
+		constexpr void reserve(size_type capacity) {
 			if(m_capacity > capacity) {
 				return;
 			}
@@ -299,7 +299,7 @@ namespace utility {
 		 * elements are \b not 0-filled).
 		 * \param size Size to resize to
 		 */
-		constexpr void resize(u64 size) {
+		constexpr void resize(size_type size) {
 			ASSERT(this->size != this->m_size, "size is already equal to the passed value");
 
 			if (size > m_capacity) {
@@ -324,7 +324,7 @@ namespace utility {
 		 * \param size Size to resize to
 		 * \param value Value to fill the new elements with
 		 */
-		constexpr void resize(u64 size, const type& value) {
+		constexpr void resize(size_type size, const type& value) {
 			ASSERT(size != this->m_size, "size is already equal to the passed value");
 
 			if (size > m_capacity) {
@@ -350,7 +350,7 @@ namespace utility {
 			this->m_size = size;
 		}
 	protected:
-		static type* allocate(u64 count) {
+		static type* allocate(size_type count) {
 			return static_cast<type*>(utility::malloc(count * sizeof(type)));
 		}
 
@@ -380,6 +380,6 @@ namespace utility {
 			}
 		}
 	protected:
-		u64 m_capacity;
+		size_type m_capacity;
 	};
 } // namespace utility

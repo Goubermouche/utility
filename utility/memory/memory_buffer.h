@@ -20,7 +20,7 @@ namespace utility {
 		constexpr memory_buffer(size_type size, type* data) : base_type(data, size), m_capacity(size) {}
 
 		constexpr memory_buffer(std::initializer_list<type> initializer_list)
-		: base_type(allocate(initializer_list.size()), m_size(initializer_list.size())), m_capacity(this->m_size) {
+		: base_type(allocate(static_cast<size_type>(initializer_list.size())), static_cast<size_type>(initializer_list.size())), m_capacity(this->m_size) {
 			std::uninitialized_copy(initializer_list.begin(), initializer_list.end(), this->m_data);
 		}
 
@@ -79,7 +79,7 @@ namespace utility {
 		 */
 		constexpr void clear() {
 			this->m_size = 0;
-			zero_fill();
+			// zero_fill();
 		}
 
 		/**
@@ -136,7 +136,7 @@ namespace utility {
 		 * \param args Value constructor parameters.
 		 */
 		template<typename... arg_types>
-		constexpr void emplace_back(arg_types&&... args) {
+		constexpr auto emplace_back(arg_types&&... args) -> type& {
 			static_assert(
 				!std::is_trivial_v<type>, 
 				"use push_back() instead of emplace_back() with trivial types"
@@ -148,6 +148,8 @@ namespace utility {
 
 			new (this->m_data + this->m_size) type(std::forward<arg_types>(args)...);
 			this->m_size++;
+
+			return this->m_data[this->m_size - 1];
 		}
 
 		/**

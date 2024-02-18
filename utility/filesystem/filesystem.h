@@ -21,6 +21,19 @@ namespace utility {
 			return SUCCESS;
 		}
 
+		inline auto write(const filepath& path, const std::string& value) -> result<void> {
+			std::ofstream file(path.get_path(), std::ios::binary);
+
+			if (!file) {
+				return error(std::format("cannot write file {}\n", path));
+			}
+
+			file.write(value.c_str(), value.size());
+			file.close();
+
+			return SUCCESS;
+		}
+
 		inline auto load(const filepath& path) -> result<std::string> {
 			std::ifstream file(path.get_path());
 

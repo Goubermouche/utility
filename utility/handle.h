@@ -56,14 +56,10 @@ struct std::hash<utility::types::handle<type>> {
 };
 
 template<typename type>
-struct std::formatter<utility::types::handle<type>> {
-	auto parse(format_parse_context& ctx) {
-		return ctx.begin();
-	}
-
-	auto format(const utility::types::handle<type>& obj, format_context& ctx) {
+struct std::formatter<utility::types::handle<type>> : std::formatter<std::string> {
+	auto format(utility::types::handle<type> obj, format_context& ctx) const {
 		if (obj) {
-			return format_to(ctx.out(), "{}", static_cast<utility::u64>(obj.get()));
+			return format_to(ctx.out(), "{}", reinterpret_cast<utility::u64>(obj.get()));
 		}
 
 		return format_to(ctx.out(), "0");

@@ -13,14 +13,10 @@ namespace utility {
 	public:
 		byte_buffer() = default;
 
-		byte_buffer(const memory_buffer& container)
-			: memory_buffer(container) {}
-
-		byte_buffer(const memory_view<byte>& slice)
-			: memory_buffer(slice.get_size(), slice.get_data()) {}
-
-		byte_buffer(u64 size)
-			: memory_buffer(size) {}
+		byte_buffer(u64 size) : memory_buffer(size) {}
+		byte_buffer(const memory_buffer& container) : memory_buffer(container) {}
+		byte_buffer(const memory_view<byte>& slice) : memory_buffer(slice.get_size(), slice.get_data()) {}
+		byte_buffer(std::initializer_list<byte> initializer_list) : memory_buffer(initializer_list) {}
 
 		auto operator[](u64 index) const -> const byte& {
 			return m_data[index];

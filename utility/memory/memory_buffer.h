@@ -261,10 +261,28 @@ namespace utility {
 		}
 
 		/**
+		 * \brief Retrieves the first element in the container.
+		 * \return First element in the container
+		 */
+		[[nodiscard]] constexpr auto first() -> type& {
+			ASSERT(this->m_data != nullptr && this->m_size > 0, "first() used on an uninitialized container");
+			return this->m_data[0];
+		}
+
+		/**
 		 * \brief Retrieves the last element in the container.
 		 * \return Last element in the container
 		 */
 		[[nodiscard]] constexpr auto last() const -> const type& {
+			ASSERT(this->m_data != nullptr && this->m_size > 0, "last() used on an uninitialized container");
+			return this->m_data[this->m_size - 1];
+		}
+
+		/**
+		 * \brief Retrieves the last element in the container.
+		 * \return Last element in the container
+		 */
+		[[nodiscard]] constexpr auto last() -> type& {
 			ASSERT(this->m_data != nullptr && this->m_size > 0, "last() used on an uninitialized container");
 			return this->m_data[this->m_size - 1];
 		}
@@ -302,7 +320,9 @@ namespace utility {
 		 * \param size Size to resize to
 		 */
 		constexpr void resize(size_type size) {
-			ASSERT(this->size != this->m_size, "size is already equal to the passed value");
+			if(this->m_size == size) {
+				return;
+			}
 
 			if (size > m_capacity) {
 				reserve(size);
@@ -318,6 +338,14 @@ namespace utility {
 			}
 
 			this->m_size = size;
+		}
+
+		[[nodiscard]] constexpr auto pop_back() -> type& {
+			return this->m_data[--this->m_size];
+		}
+
+		constexpr void pop() {
+			--this->m_size;
 		}
 
 		/**

@@ -3,6 +3,8 @@
 #pragma once
 #include "../memory/memory_buffer.h"
 
+// TODO: remove this
+
 namespace utility {
 	template<typename type>
 	class stack : public memory_buffer<type> {
@@ -15,15 +17,5 @@ namespace utility {
 
 		stack(const memory_buffer<type>& container)
 			: memory_buffer<type>(container) {}
-
-		[[nodiscard]] constexpr auto pop_back() -> type& {
-			return this->m_data[--this->m_size];
-		}
-
-		constexpr void pop() {
-			--this->m_size;
-		}
-	private:
-
 	};
 } // namespace utility

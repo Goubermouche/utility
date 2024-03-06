@@ -43,10 +43,28 @@ namespace utility {
 		}
 
 		block_allocator(const block_allocator& other) = delete;
-		block_allocator(block_allocator&& other) = delete;
+
+		block_allocator(block_allocator&& other) {
+			m_first_block = std::move(other.m_first_block);
+			m_current_block = std::move(other.m_current_block);
+
+			std::exchange(m_block_size, other.m_block_size);
+			std::exchange(m_block_count, other.m_block_count);
+		}
 
 		block_allocator& operator=(const block_allocator& other) = delete;
-		block_allocator& operator=(block_allocator&& other) = delete;
+
+		block_allocator& operator=(block_allocator&& other) {
+			if(this != &other) {
+				m_first_block = std::move(other.m_first_block);
+				m_current_block = std::move(other.m_current_block);
+
+				std::exchange(m_block_size, other.m_block_size);
+				std::exchange(m_block_count, other.m_block_count);
+			}
+
+			return *this;
+		}
 
 		/**
 		 * \brief Prints owned blocks and their contents.

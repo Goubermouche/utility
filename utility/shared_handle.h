@@ -15,7 +15,8 @@ namespace utility::types {
 	template<typename type, typename count_type = u64>
 	class shared_handle {
 	public:
-		// Regular copy constructor
+		shared_handle() = default;
+
 		shared_handle(const shared_handle& other)
 			: m_ptr(other.m_ptr), m_count(other.m_count) {
 			if (m_count) {
@@ -23,7 +24,6 @@ namespace utility::types {
 			}
 		}
 
-		// Templated copy constructor for other types
 		template<typename other_type>
 		shared_handle(const shared_handle<other_type>& other)
 			: m_ptr(reinterpret_cast<type*>(other.get())), m_count(other.get_count()) {
@@ -32,15 +32,13 @@ namespace utility::types {
 			}
 		}
 
-		// Constructor with allocator
 		template<typename allocator, typename... arg_types>
 			requires is_allocator<allocator>
 		shared_handle(allocator& alloc, arg_types&&... args)
 			: m_ptr(alloc.template emplace<type>(std::forward<arg_types>(args)...)),
 			m_count(alloc.template emplace<count_type>(1)) {}
 
-		// Copy assignment operator
-		shared_handle& operator=(const shared_handle& other) {
+		auto operator=(const shared_handle& other) -> shared_handle& {
 			if (this != &other) {
 				release();
 				m_ptr = other.m_ptr;
@@ -52,10 +50,9 @@ namespace utility::types {
 			return *this;
 		}
 
-		// Templated assignment operator for other types
 		template<typename other_type>
-		shared_handle& operator=(const shared_handle<other_type>& other) {
-			if (reinterpret_cast<void*>(this) != reinterpret_cast<void*>(&other)) {
+		auto operator=(shared_handle<other_type>& other) -> shared_handle& {
+			if(reinterpret_cast<void*>(this) != reinterpret_cast<void*>(&other)) {
 				release();
 				m_ptr = reinterpret_cast<type*>(other.get());
 				m_count = other.get_count();
@@ -63,6 +60,7 @@ namespace utility::types {
 					(*m_count)++;
 				}
 			}
+
 			return *this;
 		}
 

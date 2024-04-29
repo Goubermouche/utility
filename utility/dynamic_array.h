@@ -1,6 +1,5 @@
 #pragma once
 #include "ranges.h"
-#include <type_traits>
 
 namespace utility {
 	template <typename element_type, typename size_type = std::size_t>

@@ -5,7 +5,9 @@
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
+#include <utility>
 #include <memory>
+#include <limits>
 
 namespace utility {
 	namespace types {

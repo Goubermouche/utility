@@ -1,4 +1,5 @@
 #include "utility/map.h"
+#include "utility/assert.h"
 
 using namespace utility::types;
 

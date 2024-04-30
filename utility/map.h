@@ -2,6 +2,7 @@
 
 #pragma once
 #include "dynamic_array.h"
+#include "assert.h"
 
 namespace utility {
 	namespace detail {
@@ -353,8 +354,7 @@ namespace utility {
 				return it->second;
 			}
 			 
-			// TODO: assert
-			std::cerr << "key not found\n";
+			ASSERT(false, "key not found");
 			return value_type{};
 		}
 
@@ -452,8 +452,8 @@ namespace utility {
 			if(m_max_bucket_capacity == max_bucket_count()) {
 				m_values.pop_back();
 
-				// TODO: assert
-				throw std::overflow_error("overflow");
+				ASSERT(false, "map ran into an overflow");
+				return;
 			}
 
 			--m_shifts;

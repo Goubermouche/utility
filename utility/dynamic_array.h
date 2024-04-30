@@ -2,16 +2,16 @@
 #include "ranges.h"
 
 namespace utility {
-	template <typename element_type, typename size_type = std::size_t>
+	template <typename element_type, typename size = u64>
 	class dynamic_array {
 	public:
 		using iterator = element_type*;
 		using const_iterator = const element_type*;
 
 		using value_type = element_type;
+		using size_type = size;
 
 		dynamic_array() : m_data(nullptr), m_capacity(0), m_size(0) {}
-
 		dynamic_array(const std::initializer_list<element_type>& values)
 			: m_data(nullptr), m_capacity(0), m_size(0) {
 			reserve(values.size());
@@ -19,7 +19,6 @@ namespace utility {
 
 			m_size = values.size();
 		}
-
 		dynamic_array(const dynamic_array& other)
 			: m_data(nullptr), m_capacity(0), m_size(0) {
 			reserve(other.get_size());
@@ -27,13 +26,18 @@ namespace utility {
 
 			m_size = other.get_size();
 		}
+		dynamic_array(dynamic_array&& other) noexcept {
+			m_data = std::move(other.m_data);
+			m_capacity = std::move(other.m_capacity);
+			m_size = std::move(other.m_size);
+		}
 
 		~dynamic_array() {
 			clear();
 			std::free(m_data);
 		}
 
-		dynamic_array& operator=(const dynamic_array& other) {
+		[[nodiscard]] auto operator=(const dynamic_array& other) -> dynamic_array& {
 			if(this != &other) {
 				clear();
 				reserve(other.m_size);
@@ -44,12 +48,17 @@ namespace utility {
 
 			return *this;
 		}
-
-		auto operator[](u64 index) -> value_type& {
-			return m_data[index];
+		[[nodiscard]] auto operator=(dynamic_array&& other) noexcept -> dynamic_array& {
+			m_data = std::move(other.m_data);
+			m_capacity = std::move(other.m_capacity);
+			m_size = std::move(other.m_size);
+			return *this;
 		}
 
-		auto operator[](u64 index) const -> const value_type& {
+		[[nodiscard]] auto operator[](u64 index) -> value_type& {
+			return m_data[index];
+		}
+		[[nodiscard]] auto operator[](u64 index) const -> const value_type& {
 			return m_data[index];
 		}
 
@@ -74,10 +83,6 @@ namespace utility {
 
 			m_data[m_size++] = value_type(std::forward<Args>(args)...);
 			return m_data[m_size - 1];
-		}
-
-		auto empty() const -> bool {
-			return m_size == 0;
 		}
 
 		void pop_back() {
@@ -124,10 +129,13 @@ namespace utility {
 			m_size = 0;
 		}
 
-		auto size() const -> u64 {
-			return m_size;
+		[[nodiscard]] auto empty() const -> bool {
+			return m_size == 0;
 		}
 
+		[[nodiscard]] auto size() const -> u64 {
+			return m_size;
+		}
 
 		[[nodiscard]] auto begin() -> iterator { return m_data; }
 		[[nodiscard]] auto end() -> iterator { return m_data + m_size; }
@@ -144,7 +152,6 @@ namespace utility {
 				construct_range(m_data, begin, end);
 			}
 		}
-
 	protected:
 		element_type* m_data;
 		size_type m_capacity;

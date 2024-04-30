@@ -1,10 +1,11 @@
+// Implementation lifted from: https://github.com/martinus/unordered_dense (MIT license)
+
 #pragma once
 #include "dynamic_array.h"
-#include <vector>
 
 namespace utility {
 	namespace detail {
-inline void mum(u64* a, u64* b) {
+		inline void mum(u64* a, u64* b) {
 #if defined(__SIZEOF_INT128__)
 			__uint128_t r = *a;
 			r *= *b;
@@ -68,8 +69,8 @@ inline void mum(u64* a, u64* b) {
 
 			auto const* p = static_cast<u8 const*>(key);
 			u64 seed = secret[0];
-			u64 a{};
-			u64 b{};
+			u64 a;
+			u64 b;
 
 			if((len <= 16)) {
 				if((len >= 4)) {
@@ -116,13 +117,41 @@ inline void mum(u64* a, u64* b) {
 			return mix(secret[1] ^ len, mix(a ^ secret[1], b ^ seed));
 		}
 
+		/**
+		 * \brief Base hash operator.
+		 * \tparam type Type to hash
+		 */
 		template<typename type>
 		struct hash {};
 
-		template<>
-		struct hash<i32> {
-			auto operator()(const int& obj) const noexcept -> u64 {
-				return compute_hash(static_cast<u64>(obj));
+#define DETAIL_CREATE_HASH_OPERATOR(type)                      \
+		template<>                                                 \
+		struct hash<type> {                                        \
+			auto operator()(const type& obj) const noexcept -> u64 { \
+				return compute_hash(static_cast<u64>(obj));            \
+			}                                                        \
+		}
+
+		DETAIL_CREATE_HASH_OPERATOR(i8);
+		DETAIL_CREATE_HASH_OPERATOR(i16);
+		DETAIL_CREATE_HASH_OPERATOR(i32);
+		DETAIL_CREATE_HASH_OPERATOR(i64);
+
+		DETAIL_CREATE_HASH_OPERATOR(u8);
+		DETAIL_CREATE_HASH_OPERATOR(u16);
+		DETAIL_CREATE_HASH_OPERATOR(u32);
+		DETAIL_CREATE_HASH_OPERATOR(u64);
+
+		DETAIL_CREATE_HASH_OPERATOR(f32);
+		DETAIL_CREATE_HASH_OPERATOR(f64);
+
+		DETAIL_CREATE_HASH_OPERATOR(char);
+		DETAIL_CREATE_HASH_OPERATOR(bool);
+
+		template<typename base_type>
+		struct hash<base_type*> {
+			auto operator()(const base_type* obj) const noexcept -> u64 {
+				return compute_hash(reinterpret_cast<u64>(obj));
 			}
 		};
 
@@ -134,19 +163,22 @@ inline void mum(u64* a, u64* b) {
 		};
 	} // namespace detail
 
-	template<
-		typename key,
-		typename value,
-		typename hash = detail::hash<key>,
-		typename key_equal = std::equal_to<key>
-	>
+	/**
+	 * \brief Hash-based unordered map. Maps a \b key to a specific \b value.
+	 * \tparam key Type to use as a key type
+	 * \tparam value Type to use as the value type
+	 * \tparam hash Hash to use when hashing the key type. A hash operator ("()") has to be implemented in order for the
+	 * map to work correctly. Some basic hash operators are provided by default. 
+	 * \tparam key_equal Key equality operator. Uses std::equal by default. 
+	 */
+	template<typename key, typename value, typename hash = detail::hash<key>, typename key_equal = std::equal_to<key>>
 	class map {
 		struct bucket {
 			static constexpr u32 dist_inc = 1U << 8U;             // skip 1 byte fingerprint
 			static constexpr u32 fingerprint_mask = dist_inc - 1; // mask for 1 byte of fingerprint
 
-			u32 m_dist_and_fingerprint; // upper 3 byte: distance to original bucket. lower byte: fingerprint from hash
-			u32 m_value_idx;            // index into the m_values vector.
+			u32 m_dist_and_fingerprint;                           // upper 3 byte: distance to original bucket. lower byte: fingerprint from hash
+			u32 m_value_idx;                                      // index into the m_values vector.
 		};
 	public:
 		using underlying_value_type = dynamic_array<std::pair<key, value>>;
@@ -161,8 +193,7 @@ inline void mum(u64* a, u64* b) {
 		using key_type = key;
 
 		map() : map(0) {}
-
-		explicit map(u64 bucket_count) {
+		map(u64 bucket_count) : m_buckets(nullptr), m_num_buckets(0), m_max_bucket_capacity(0) {
 			if(bucket_count != 0) {
 				reserve(bucket_count);
 			}
@@ -171,32 +202,71 @@ inline void mum(u64* a, u64* b) {
 				clear_buckets();
 			}
 		}
-
+		map(const map& other)
+		: m_values(other.m_values), m_equal(other.m_equal), m_hash(other.m_hash) {
+			copy_buckets(other);
+		}
+		map(map&& other) noexcept
+			: m_values(other.m_values) {
+			*this = std::move(other);
+		}
 		~map() {
 			delete[] m_buckets;
 		}
 
-		auto at(const key_type& k) -> value& {
-			return do_at(k);
+		auto operator=(const map& other) -> map& {
+			if(&other != this) {
+				deallocate_buckets();
+				m_values = other.m_values;
+				m_hash = other.m_hash;
+				m_equal = other.m_equal;
+				m_shifts = initial_shifts;
+				copy_buckets(other);
+			}
+
+			return *this;
+		}
+		auto operator=(map&& other) noexcept -> map& {
+			if(&other != this) {
+				deallocate_buckets();
+
+				m_values = std::move(other.m_values);
+				other.m_values.clear();
+				m_buckets = std::exchange(other.m_buckets, nullptr);
+				m_num_buckets = std::exchange(other.m_num_buckets, 0);
+				m_max_bucket_capacity = std::exchange(other.m_max_bucket_capacity, 0);
+				m_shifts = std::exchange(other.m_shifts, initial_shifts);
+				m_hash = std::exchange(other.m_hash, {});
+				m_equal = std::exchange(other.m_equal, {});
+
+				other.allocate_buckets_from_shift();
+				other.clear_buckets();
+			}
+
+			return *this;
+		}
+
+		auto operator[](const key_type& k) -> value_type& {
+			return try_emplace(k).first->second;
+		}
+		auto operator[](key_type&& k) -> value_type& {
+			return try_emplace(std::move(k)).first->second;
 		}
 
 		auto insert(bucket_type&& v) -> std::pair<iterator, bool> {
 			return emplace(std::move(v));
 		}
 
-		auto operator[](const key_type& k) -> value_type& {
-			return try_emplace(k).first->second;
+		[[nodiscard]] auto at(const key_type& k) -> value& {
+			return do_at(k);
 		}
 
-		auto operator[](key_type&& k) -> value_type& {
-			return try_emplace(std::move(k)).first->second;
+		[[nodiscard]] auto find(const key& k) -> iterator {
+			return do_find(k);
 		}
 
 		template<class... Args>
 		auto emplace(Args&&... args) -> std::pair<iterator, bool> {
-			// we have to instantiate the bucket_type to be able to access the key.
-			// 1. emplace_back the object so it is constructed. 2. If the key is already there, pop it later in the loop.
-
 			auto& k = get_key(m_values.emplace_back(std::forward<Args>(args)...));
 			auto h = mixed_hash(k);
 			auto dist_and_fingerprint = dist_and_fingerprint_from_hash(h);
@@ -218,14 +288,12 @@ inline void mum(u64* a, u64* b) {
 				bucket_idx = next(bucket_idx);
 			}
 
-			// value is new, place the bucket and shift up until we find an empty spot
 			auto value_idx = static_cast<value_idx_type>(m_values.size() - 1);
+
 			if(is_full()) {
-				// increase_size just rehashes all the data we have in m_values
 				increase_size();
 			}
 			else {
-				// place element and shift up until we find an empty spot
 				place_and_shift_up({ dist_and_fingerprint, value_idx }, bucket_idx);
 			}
 
@@ -246,46 +314,31 @@ inline void mum(u64* a, u64* b) {
 			}
 		}
 
-		auto find(const key& k) -> iterator {
-			return do_find(k);
-		}
-
-		auto begin() noexcept -> iterator {
+		[[nodiscard]] auto begin() noexcept -> iterator {
 			return m_values.begin();
 		}
-
-		auto begin() const noexcept -> const_iterator {
+		[[nodiscard]] auto begin() const noexcept -> const_iterator {
 			return m_values.begin();
 		}
-
-		auto cbegin() const noexcept -> const_iterator {
+		[[nodiscard]] auto cbegin() const noexcept -> const_iterator {
 			return m_values.cbegin();
 		}
-
-		auto end() noexcept -> iterator {
+		[[nodiscard]] auto end() noexcept -> iterator {
 			return m_values.end();
 		}
-
-		auto cend() const noexcept -> const_iterator {
+		[[nodiscard]] auto cend() const noexcept -> const_iterator {
 			return m_values.cend();
 		}
-
-		auto end() const noexcept -> const_iterator {
+		[[nodiscard]] auto end() const noexcept -> const_iterator {
 			return m_values.end();
 		}
 
 		[[nodiscard]] auto size() const noexcept -> u64 {
 			return m_values.size();
 		}
-
 		[[nodiscard]] auto is_full() const -> bool {
 			return size() > m_max_bucket_capacity;
 		}
-
-		[[nodiscard]] auto max_load_factor() const -> f32 {
-			return m_max_load_factor;
-		}
-
 		[[nodiscard]] auto empty() const noexcept -> bool {
 			return m_values.empty();
 		}
@@ -302,6 +355,7 @@ inline void mum(u64* a, u64* b) {
 			 
 			// TODO: assert
 			std::cerr << "key not found\n";
+			return value_type{};
 		}
 
 		template <typename K, typename... Args>
@@ -319,12 +373,15 @@ inline void mum(u64* a, u64* b) {
 					}
 				}
 				else if(dist_and_fingerprint > b->m_dist_and_fingerprint) {
-					return do_place_element(dist_and_fingerprint,
+					return do_place_element(
+						dist_and_fingerprint,
 						bucket_idx,
 						std::piecewise_construct,
 						std::forward_as_tuple(std::forward<K>(k)),
-						std::forward_as_tuple(std::forward<Args>(args)...));
+						std::forward_as_tuple(std::forward<Args>(args)...)
+					);
 				}
+
 				dist_and_fingerprint = dist_inc(dist_and_fingerprint);
 				bucket_idx = next(bucket_idx);
 			}
@@ -332,10 +389,9 @@ inline void mum(u64* a, u64* b) {
 
 		template <typename... Args>
 		auto do_place_element(dist_and_fingerprint_type dist_and_fingerprint, value_idx_type bucket_idx, Args&&... args) -> std::pair<iterator, bool> {
-			// emplace the new value. If that throws an exception, no harm done; index is still in a valid state
 			m_values.emplace_back(std::forward<Args>(args)...);
-
 			auto value_idx = static_cast<value_idx_type>(m_values.size() - 1);
+
 			if(is_full()) {
 				increase_size();
 			}
@@ -343,7 +399,6 @@ inline void mum(u64* a, u64* b) {
 				place_and_shift_up({ dist_and_fingerprint, value_idx }, bucket_idx);
 			}
 
-			// place element and shift up until we find an empty spot
 			return { begin() + static_cast<u64>(value_idx), true };
 		}
 
@@ -357,10 +412,10 @@ inline void mum(u64* a, u64* b) {
 			auto bucket_idx = bucket_idx_from_hash(mh);
 			auto* b = &at(m_buckets, bucket_idx);
 
-			// unrolled loop. *Always* check a few directly, then enter the loop. This is faster.
 			if(dist_and_fingerprint == b->m_dist_and_fingerprint && m_equal(k, get_key(m_values[b->m_value_idx]))) {
 				return begin() + static_cast<u64>(b->m_value_idx);
 			}
+
 			dist_and_fingerprint = dist_inc(dist_and_fingerprint);
 			bucket_idx = next(bucket_idx);
 			b = &at(m_buckets, bucket_idx);
@@ -368,6 +423,7 @@ inline void mum(u64* a, u64* b) {
 			if(dist_and_fingerprint == b->m_dist_and_fingerprint && m_equal(k, get_key(m_values[b->m_value_idx]))) {
 				return begin() + static_cast<u64>(b->m_value_idx);
 			}
+
 			dist_and_fingerprint = dist_inc(dist_and_fingerprint);
 			bucket_idx = next(bucket_idx);
 			b = &at(m_buckets, bucket_idx);
@@ -397,7 +453,7 @@ inline void mum(u64* a, u64* b) {
 				m_values.pop_back();
 
 				// TODO: assert
-				throw std::overflow_error("overflo");
+				throw std::overflow_error("overflow");
 			}
 
 			--m_shifts;
@@ -478,7 +534,7 @@ inline void mum(u64* a, u64* b) {
 		[[nodiscard]] constexpr auto calc_shifts_for_size(u64 s) const -> u8 {
 			auto shifts = initial_shifts;
 
-			while(shifts > 0 && static_cast<u64>(static_cast<float>(calc_num_buckets(shifts)) * max_load_factor()) < s) {
+			while(shifts > 0 && static_cast<u64>(static_cast<float>(calc_num_buckets(shifts)) * default_max_load_factor) < s) {
 				--shifts;
 			}
 
@@ -521,21 +577,33 @@ inline void mum(u64* a, u64* b) {
 				m_max_bucket_capacity = max_bucket_count();
 			}
 			else {
-				m_max_bucket_capacity = static_cast<value_idx_type>(static_cast<float>(m_num_buckets) * max_load_factor());
+				m_max_bucket_capacity = static_cast<value_idx_type>(static_cast<float>(m_num_buckets) * default_max_load_factor);
+			}
+		}
+
+		void copy_buckets(const map& other) {
+			if(empty()) {
+				allocate_buckets_from_shift();
+				clear_buckets();
+			}
+			else {
+				m_shifts = other.m_shifts;
+				allocate_buckets_from_shift();
+				std::memcpy(m_buckets, other.m_buckets, sizeof(bucket) * bucket_count());
 			}
 		}
 	protected:
+		static constexpr f32 default_max_load_factor = 0.8f;
 		static constexpr u8 initial_shifts = 64 - 2;
 
-		underlying_value_type m_values{};
-		bucket* m_buckets{};
+		underlying_value_type m_values;
+		bucket* m_buckets;
 
-		key_equal m_equal{};
-		hash m_hash{};
+		key_equal m_equal;
+		hash m_hash;
 
-		u64 m_num_buckets = 0;
-		u64 m_max_bucket_capacity = 0;
-		f32 m_max_load_factor = 0.8F;
+		u64 m_num_buckets;
+		u64 m_max_bucket_capacity;
 		u8 m_shifts = initial_shifts;
 	};
 } // namespace utility

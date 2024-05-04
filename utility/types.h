@@ -31,4 +31,28 @@ namespace utility {
 	inline void memcpy(void* destination, const void* source, u64 size) {
 		std::memcpy(destination, source, size);
 	}
+
+	template<std::three_way_comparable type>
+	struct range {
+		constexpr range() : start(type()), end(type()) {}
+		constexpr range(const type& start, const type& end) : start(start), end(end) {}
+
+		[[nodiscard]] constexpr auto contains(const range& other) const -> bool {
+			return start <= other.start && end >= other.end;
+		}
+
+		[[nodiscard]] constexpr auto overlaps(const range& other) const -> bool {
+			return start < other.end && end > other.start;
+		}
+
+		[[nodiscard]] constexpr auto operator<=>(const range& other) const -> std::strong_ordering = default;
+
+		friend auto operator<<(std::ostream& stream, const range& range) -> std::ostream& {
+			stream << range.start << ':' << range.end;
+			return stream;
+		}
+
+		type start;
+		type end;
+	};
 } // namespace utility

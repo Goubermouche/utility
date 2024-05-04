@@ -1,13 +1,8 @@
 #pragma once
-#include <initializer_list>
-#include <type_traits>
 #include <iostream>
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
-#include <utility>
-#include <memory>
-#include <limits>
 
 namespace utility {
 	namespace types {
@@ -26,4 +21,14 @@ namespace utility {
 	} // namespace types
 
 	using namespace types;
+
+	inline void free(void* data) {
+		std::free(data);
+	}
+	inline auto malloc(u64 size) -> void* {
+		return std::malloc(size);
+	}
+	inline void memcpy(void* destination, const void* source, u64 size) {
+		std::memcpy(destination, source, size);
+	}
 } // namespace utility

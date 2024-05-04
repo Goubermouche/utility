@@ -27,14 +27,14 @@ namespace utility {
 			m_size = other.get_size();
 		}
 		dynamic_array(dynamic_array&& other) noexcept {
-			m_data = std::move(other.m_data);
-			m_capacity = std::move(other.m_capacity);
-			m_size = std::move(other.m_size);
+			m_data = std::exchange(other.m_data, nullptr);
+			m_capacity = std::exchange(other.m_capacity, 0);
+			m_size = std::exchange(other.m_size, 0);
 		}
 
 		~dynamic_array() {
 			clear();
-			std::free(m_data);
+			utility::free(m_data);
 		}
 
 		[[nodiscard]] auto operator=(const dynamic_array& other) -> dynamic_array& {
@@ -49,9 +49,9 @@ namespace utility {
 			return *this;
 		}
 		[[nodiscard]] auto operator=(dynamic_array&& other) noexcept -> dynamic_array& {
-			m_data = std::move(other.m_data);
-			m_capacity = std::move(other.m_capacity);
-			m_size = std::move(other.m_size);
+			m_data = std::exchange(other.m_data, nullptr);
+			m_capacity = std::exchange(other.m_capacity, 0);
+			m_size = std::exchange(other.m_size, 0);
 			return *this;
 		}
 
@@ -102,21 +102,21 @@ namespace utility {
 				return;
 			}
 
-			element_type* new_data = static_cast<element_type*>(std::malloc(new_capacity * sizeof(element_type)));
+			element_type* new_data = static_cast<element_type*>(utility::malloc(new_capacity * sizeof(element_type)));
 
 			if(new_data == nullptr) {
 				throw std::bad_alloc();
 			}
 
 			if constexpr(std::is_trivial_v<element_type>) {
-				std::memcpy(new_data, m_data, m_size * sizeof(element_type));
+				utility::memcpy(new_data, m_data, m_size * sizeof(element_type));
 			}
 			else {
 				construct_range(new_data, begin(), end());
 				destruct_range(begin(), end());
 			}
 
-			std::free(m_data);
+			utility::free(m_data);
 			m_data = new_data;
 			m_capacity = new_capacity;
 		}
@@ -146,7 +146,7 @@ namespace utility {
 	protected:
 		void construct(const_iterator begin, const_iterator end, size_type size) {
 			if constexpr(std::is_trivial_v<element_type>) {
-				std::memcpy(m_data, begin, size);
+				utility::memcpy(m_data, begin, size);
 			}
 			else {
 				construct_range(m_data, begin, end);

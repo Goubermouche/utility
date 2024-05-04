@@ -46,13 +46,13 @@ namespace utility {
 
 		[[nodiscard]] inline auto r4(const u8* p) -> u64 {
 			u32 v{};
-			std::memcpy(&v, p, 4);
+			utility::memcpy(&v, p, 4);
 			return v;
 		}
 
 		[[nodiscard]] inline auto r8(const u8* p) -> u64 {
 			u64 v{};
-			std::memcpy(&v, p, 8U);
+			utility::memcpy(&v, p, 8U);
 			return v;
 		}
 
@@ -207,17 +207,17 @@ namespace utility {
 		: m_values(other.m_values), m_equal(other.m_equal), m_hash(other.m_hash) {
 			copy_buckets(other);
 		}
-		map(map&& other) noexcept
-			: m_values(other.m_values) {
+		map(map&& other) noexcept : m_buckets(nullptr) {
 			*this = std::move(other);
 		}
 		~map() {
-			delete[] m_buckets;
+			utility::free(m_buckets);
 		}
 
 		auto operator=(const map& other) -> map& {
 			if(&other != this) {
 				deallocate_buckets();
+
 				m_values = other.m_values;
 				m_hash = other.m_hash;
 				m_equal = other.m_equal;
@@ -243,7 +243,7 @@ namespace utility {
 				other.allocate_buckets_from_shift();
 				other.clear_buckets();
 			}
-
+				
 			return *this;
 		}
 
@@ -463,10 +463,8 @@ namespace utility {
 		}
 
 		void deallocate_buckets() {
-			if(nullptr != m_buckets) {
-				delete[] m_buckets;
-				m_buckets = nullptr;
-			}
+			utility::free(m_buckets);
+			m_buckets = nullptr;
 
 			m_num_buckets = 0;
 			m_max_bucket_capacity = 0;
@@ -571,7 +569,7 @@ namespace utility {
 
 		void allocate_buckets_from_shift() {
 			m_num_buckets = calc_num_buckets(m_shifts);
-			m_buckets = new bucket[m_num_buckets];
+			m_buckets = static_cast<bucket*>(utility::malloc(m_num_buckets * sizeof(bucket)));
 
 			if(m_num_buckets == max_bucket_count()) {
 				m_max_bucket_capacity = max_bucket_count();
@@ -589,7 +587,7 @@ namespace utility {
 			else {
 				m_shifts = other.m_shifts;
 				allocate_buckets_from_shift();
-				std::memcpy(m_buckets, other.m_buckets, sizeof(bucket) * bucket_count());
+				utility::memcpy(m_buckets, other.m_buckets, sizeof(bucket) * bucket_count());
 			}
 		}
 	protected:

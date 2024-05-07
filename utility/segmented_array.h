@@ -34,6 +34,14 @@ namespace utility {
 				return *this;
 			}
 
+			auto operator+(u64 offset) -> iterator& {
+				for(u64 i = 0; i < offset; ++i) {
+					this->operator++();
+				}
+
+				return *this;
+			}
+
 			auto operator*() -> type& {
 				return m_segment->data[m_index];
 			}
@@ -46,14 +54,13 @@ namespace utility {
 				return !(*this == other);
 			}
 
-		protected:
 			segment* m_segment;
 			u64 m_index;
 		};
 	public:
 		segmented_array() : m_first_segment(nullptr), m_current_segment(nullptr), m_segment_capacity(0), m_size(0) {}
 		segmented_array(u64 segment_size) : m_first_segment(nullptr), m_current_segment(nullptr), m_segment_capacity(segment_size), m_size(0) {
-			m_first_segment = allocate_segment();
+			m_first_segment = allocate_segment(m_segment_capacity);
 			m_current_segment = m_first_segment;
 		}
 
@@ -91,7 +98,7 @@ namespace utility {
 
 		void push_back(const type& value) {
 			if(m_current_segment->size >= m_current_segment->capacity) {
-				segment* next = allocate_segment();
+				segment* next = allocate_segment(m_segment_capacity);
 				m_current_segment->next = next;
 				m_current_segment = next;
 			}
@@ -104,6 +111,104 @@ namespace utility {
 			}
 
 			m_size++;
+		}
+
+		template<typename iterator_type>
+		void insert(iterator where, iterator_type source_beg, iterator_type source_end) {
+			const u64 size = difference(source_beg, source_end);
+
+			if(size == 0) {
+				return;
+			}
+
+			// first segment
+			if(where == begin()) {
+				segment* new_segment = allocate_segment(size);
+				new_segment->size = size;
+
+				new_segment->next = m_first_segment;
+				m_first_segment = new_segment;
+
+				construct_range(new_segment->data, source_beg, source_end);
+				return;
+			}
+
+			// last segment
+			if(where == end()) {
+				segment* new_segment = allocate_segment(size);
+				new_segment->size = size;
+
+				new_segment->next = nullptr;
+				where.m_segment->next = new_segment;
+				m_current_segment = new_segment;
+
+				construct_range(new_segment->data, source_beg, source_end);
+				return;
+			}
+
+			//// segment edge
+			//if(where.m_index == where.m_segment->size) {
+			//	segment* new_segment = allocate_segment(size);
+			//	new_segment->size = size;
+
+		
+			//	new_segment->next = where.m_segment->next;
+			//	where.m_segment->next = new_segment;
+
+			//	construct_range(new_segment->data, source_beg, source_end);
+			//	return;
+			//}
+
+			segment* new_segment = allocate_segment(size);
+			new_segment->size = size;
+			new_segment->next = where.m_segment->next;
+
+			if(where.m_segment->next == nullptr) {
+				m_current_segment = new_segment;
+			}
+
+			where.m_segment->next = new_segment;
+			
+			u64 used_in_first = where.m_index + size;
+			const bool can_fit_into_where = used_in_first <= where.m_segment->capacity;
+
+			if(can_fit_into_where) {
+				//std::cout << "one segment\n";
+				u64 leftover_in_first = where.m_segment->capacity - used_in_first;
+
+				for(u64 i = size; i-- > 0;) {
+					std::construct_at(&new_segment->data[size - i - 1], where.m_segment->data[where.m_segment->capacity - i - 1]);
+				}
+
+				for(u64 i = leftover_in_first; i-- > 0;) {
+					std::construct_at(&where.m_segment->data[i + where.m_index + size], where.m_segment->data[where.m_index + i]);
+				}
+
+				for(u64 i = 0; i < size; ++i) {
+					std::construct_at(&where.m_segment->data[i + where.m_index], *source_beg);
+					++source_beg;
+				}
+			}
+			else {
+				//std::cout << "two segments\n";
+
+				const u64 first_segment_size = where.m_segment->capacity - where.m_index;
+				const u64 second_segment_size = size - first_segment_size;
+
+				for(u64 i = 0; i < first_segment_size; ++i) {
+					std::construct_at(&new_segment->data[i + second_segment_size], where.m_segment->data[i + where.m_index]);
+				}
+
+				for(u64 i = 0; i < first_segment_size; ++i) {
+					std::construct_at(&where.m_segment->data[i + where.m_index], *source_beg);
+					++source_beg;
+				}
+
+				for(u64 i = 0; i < second_segment_size; ++i) {
+					std::construct_at(&new_segment->data[i], *source_beg);
+					++source_beg;
+				}
+			}
 		}
 
 		[[nodiscard]] auto size() const -> u64 {
@@ -127,12 +232,12 @@ namespace utility {
 			}
 		}
 
-		[[nodiscard]] auto allocate_segment() -> segment* {
+		[[nodiscard]] static auto allocate_segment(u64 capacity) -> segment* {
 			auto seg = static_cast<segment*>(utility::malloc(sizeof(segment)));
-			seg->data = static_cast<type*>(utility::malloc(sizeof(type) * m_segment_capacity));
+			seg->data = static_cast<type*>(utility::malloc(sizeof(type) * capacity));
 			seg->size = 0;
 			seg->next = nullptr;
-			seg->capacity = m_segment_capacity;
+			seg->capacity = capacity;
 			return seg;
 		}
 	protected:

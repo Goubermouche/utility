@@ -12,13 +12,13 @@ namespace utility {
 		using size_type = size;
 
 		dynamic_array() : m_data(nullptr), m_capacity(0), m_size(0) {}
-		dynamic_array(const std::initializer_list<element_type>& values)
-			: m_data(nullptr), m_capacity(0), m_size(0) {
-			reserve(values.size());
-			construct(values.begin(), values.end(), values.size());
+		//dynamic_array(const std::initializer_list<element_type>& values)
+		//	: m_data(nullptr), m_capacity(0), m_size(0) {
+		//	reserve(values.size());
+		//	construct(values.begin(), values.end(), values.size());
 
-			m_size = values.size();
-		}
+		//	m_size = values.size();
+		//}
 		dynamic_array(const dynamic_array& other)
 			: m_data(nullptr), m_capacity(0), m_size(0) {
 			reserve(other.get_size());

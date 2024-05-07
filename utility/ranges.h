@@ -18,4 +18,34 @@ namespace utility {
 			++begin;
 		}
 	}
+
+	template<typename iterator_type>
+	auto difference(iterator_type begin, iterator_type end) -> u64 {
+		u64 diff = 0;
+
+		while(begin != end) {
+			++begin;
+			diff++;
+		}
+
+		return diff;
+	}
+
+	template<typename iterator_type>
+	void iterator_print(iterator_type begin, iterator_type end) {
+		std::cout << '{';
+
+		while(begin != end) {
+			std::cout << *begin;
+			++begin;
+
+			if(begin != end) {
+				std::cout << ", ";
+			}
+			else {
+				std::cout << "}\n";
+				return;
+			}
+		}
+	}
 } // namespace utility

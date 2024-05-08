@@ -21,6 +21,7 @@ namespace utility {
 
 		struct iterator {
 		public:
+			iterator() = default;
 			iterator(segment* segment, u64 index) : segment(segment), index(index) {}
 
 			auto operator++() -> iterator& {
@@ -117,31 +118,29 @@ namespace utility {
 
 		template<typename iterator_type>
 		void insert(iterator where, iterator_type source_begin, iterator_type source_end) {
-			const u64 size = utility::distance(source_begin, source_end);
-			m_size += size;
+			u64 data_size = utility::distance(source_begin, source_end);
+			m_size += data_size;
 
-			if(size == 0) {
+			if(data_size == 0) {
 				return; // no elements to insert, exit early
 			}
 
-			const u64 index = where.index;
+			const u64 start = where.index;
 			const u64 segment_capacity = where.segment->capacity;
 			const u64 segment_size = where.segment->size;
-			const u64 used_in_first = index + size;
 
 			// check if we can fit our data into one segment without allocating a new one
-			if(segment_size + size <= segment_capacity) {
-				std::cout << "inplace\n";
-				const u64 new_size = segment_size + size;
-				const u64 size_of_moved = segment_size - index;
+			if(segment_size + data_size <= segment_capacity) {
+				const u64 new_size = segment_size + data_size;
+				const u64 size_of_moved = segment_size - start;
 				
 				for(u64 i = size_of_moved; i-- > 0;) {
-					std::construct_at(&where.segment->data[index + i + size], where.segment->data[index + i]);
+					std::construct_at(&where.segment->data[start + i + data_size], where.segment->data[start + i]);
 				}
 
 				// insert the new elements
-				for(u64 i = 0; i < size; ++i) {
-					std::construct_at(&where.segment->data[index + i], *source_begin);
+				for(u64 i = 0; i < data_size; ++i) {
+					std::construct_at(&where.segment->data[start + i], *source_begin);
 					++source_begin;
 				}
 
@@ -149,59 +148,70 @@ namespace utility {
 				return;
 			}
 
+			const u64 unused_size = segment_capacity - segment_size;
+			const u64 additional_size = data_size - unused_size;
+
 			// allocate a new segment for the elements
-			segment* new_segment = allocate_segment(size);
-			new_segment->size = size;
-			new_segment->next = where.segment->next;
+			segment* new_segment = allocate_segment(additional_size);
+			new_segment->size = additional_size;
+
+			// update the first segment if necessary 
+			if(where == begin()) {
+				m_first_segment = new_segment;
+				new_segment->next = where.segment;
+
+				for(u64 i = 0; i < data_size; ++i) {
+					std::construct_at(&new_segment->data[i], *source_begin);
+					++source_begin;
+				}
+
+				return;
+			}
 
 			// update the current segment pointer if necessary
 			if(where.segment->next == nullptr) {
 				m_current_segment = new_segment;
 			}
 
+			// update the linked list
+			new_segment->next = where.segment->next;
 			where.segment->next = new_segment;
-		
-			// check if the new data fits within the current segment
-			if(used_in_first <= segment_capacity) {
-				std::cout << "single\n";
-				const u64 leftover_in_first = segment_size - used_in_first;
-				const u64 unpopulated_in_first = segment_capacity - segment_size;
+			where.segment->size = std::min(segment_capacity, segment_size + data_size);
 
-				std::cout << unpopulated_in_first << '\n';
+			// move old data
+			segment* target = new_segment;
+			u64 target_index = target->size - 1;
 
-				// move existing elements to make space for the new elements
-				for(u64 i = size; i > 0; --i) {
-					std::construct_at(&new_segment->data[size - i], where.segment->data[segment_size - i]);
+			for(u64 index = segment_size; index-- > start; ) {
+				target->data[target_index] = where.segment->data[index];
+
+				if(target_index == 0) {
+					target = where.segment;
+					target_index = where.segment->size - 1;
 				}
-
-				for(u64 i = leftover_in_first; i > 0; --i) {
-					std::construct_at(&where.segment->data[index + size + i - 1], where.segment->data[index + i - 1]);
+				else {
+					--target_index;
 				}
+			}
 
-				// insert the new elements
-				for(u64 i = 0; i < size; ++i) {
-					std::construct_at(&where.segment->data[index + i], *source_begin);
+			// insert new elements
+			if(start + data_size <= segment_capacity) {
+				// we can fit everything into one segment
+				for(u64 i = 0; i < data_size; ++i) {
+					std::construct_at(&where.segment->data[start + i], *source_begin);
 					++source_begin;
 				}
 			}
 			else {
-				std::cout << "double\n";
-				// the new data spans across the current and the new segment
-				const u64 first_segment_size = segment_size - index;
-				const u64 second_segment_size = size - first_segment_size;
+				// we have to split everything into two segments 
+				const u64 first_segment_size = segment_capacity - start;
+				const u64 second_segment_size = data_size - first_segment_size;
 
-				// move elements to the new segment
 				for(u64 i = 0; i < first_segment_size; ++i) {
-					std::construct_at(&new_segment->data[second_segment_size + i], where.segment->data[index + i]);
-				}
-
-				// insert new elements in the first segment
-				for(u64 i = 0; i < first_segment_size; ++i) {
-					std::construct_at(&where.segment->data[index + i], *source_begin);
+					std::construct_at(&where.segment->data[start + i], *source_begin);
 					++source_begin;
 				}
 
-				// insert remaining new elements in the new segment
 				for(u64 i = 0; i < second_segment_size; ++i) {
 					std::construct_at(&new_segment->data[i], *source_begin);
 					++source_begin;

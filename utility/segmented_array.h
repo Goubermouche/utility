@@ -59,10 +59,33 @@ namespace utility {
 			u64 index;
 		};
 	public:
-		segmented_array() : m_first_segment(nullptr), m_current_segment(nullptr), m_segment_capacity(0), m_size(0) {}
-		segmented_array(u64 segment_size) : m_first_segment(nullptr), m_current_segment(nullptr), m_segment_capacity(segment_size), m_size(0) {
+		segmented_array()
+		: m_first_segment(nullptr), m_current_segment(nullptr), m_segment_capacity(0), m_size(0) {}
+
+		segmented_array(u64 segment_size)
+		: m_first_segment(nullptr), m_current_segment(nullptr), m_segment_capacity(segment_size), m_size(0) {
 			m_first_segment = allocate_segment(m_segment_capacity);
 			m_current_segment = m_first_segment;
+		}
+
+		segmented_array(u64 segment_size, u64 size)
+		: m_first_segment(nullptr), m_current_segment(nullptr), m_segment_capacity(segment_size), m_size(size) {
+			m_first_segment = allocate_segment(size);
+
+			m_current_segment = m_first_segment;
+			m_first_segment->size = size;
+		}
+
+		segmented_array(u64 segment_size, u64 size, const type& value)
+			: m_first_segment(nullptr), m_current_segment(nullptr), m_segment_capacity(segment_size), m_size(size) {
+			m_first_segment = allocate_segment(size);
+
+			m_current_segment = m_first_segment;
+			m_first_segment->size = size;
+
+			for(u64 i = 0; i < size; ++i) {
+				std::construct_at(&m_current_segment->data[i], value);
+			}
 		}
 
 		segmented_array(const segmented_array& other) : m_segment_capacity(other.m_segment_capacity), m_size(other.m_size) {

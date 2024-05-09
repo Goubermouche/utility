@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
+#include <chrono>
 
 namespace utility {
 	namespace types {
@@ -54,5 +55,28 @@ namespace utility {
 
 		type start;
 		type end;
+	};
+
+	class timer {
+	public:
+		void reset() {
+			m_start = std::chrono::high_resolution_clock::now();
+		}
+
+		void resume() {
+			m_start = std::chrono::high_resolution_clock::now();
+		}
+
+		void pause() {
+			m_elapsed += std::chrono::high_resolution_clock::now() - m_start;
+		}
+
+		template<typename time_unit>
+		auto get_elapsed() -> f64 {
+			return  std::chrono::duration_cast<time_unit>(m_elapsed).count();
+		}
+	private:
+		std::chrono::high_resolution_clock::time_point m_start;
+		std::chrono::duration<f64, std::micro> m_elapsed = std::chrono::high_resolution_clock::duration::zero();
 	};
 } // namespace utility

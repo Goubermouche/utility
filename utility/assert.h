@@ -1,4 +1,5 @@
 #pragma once
+#include "streams/console.h"
 #include "types.h"
 
 #ifdef DEBUG
@@ -22,12 +23,13 @@
 #endif
 
 #ifdef DEBUG_MODE
-#define ASSERT(__condition, __message)       \
-  do {                                       \
-    if(!(__condition)) {                     \
-      std::cerr << (__message) << std::endl; \
-      DEBUG_BREAK();                         \
-    }                                        \
+#define ASSERT(__condition, __message, ...)                \
+  do {                                                     \
+    if(!(__condition)) {                                   \
+      utility::console::print_err(__message, __VA_ARGS__); \
+			utility::console::flush();                           \
+      DEBUG_BREAK();                                       \
+    }                                                      \
   } while(false)
 #else
 #define ASSERT(__condition, __message)

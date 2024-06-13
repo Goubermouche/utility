@@ -14,10 +14,10 @@ namespace utility {
 		dynamic_array() : m_data(nullptr), m_capacity(0), m_size(0) {}
 		//dynamic_array(const std::initializer_list<element_type>& values)
 		//	: m_data(nullptr), m_capacity(0), m_size(0) {
-		//	reserve(values.size());
-		//	construct(values.begin(), values.end(), values.size());
+		//	reserve(values.get_size());
+		//	construct(values.begin(), values.end(), values.get_size());
 
-		//	m_size = values.size();
+		//	m_size = values.get_size();
 		//}
 		dynamic_array(const dynamic_array& other)
 			: m_data(nullptr), m_capacity(0), m_size(0) {
@@ -37,7 +37,7 @@ namespace utility {
 			utility::free(m_data);
 		}
 
-		[[nodiscard]] auto operator=(const dynamic_array& other) -> dynamic_array& {
+		auto operator=(const dynamic_array& other) -> dynamic_array& {
 			if(this != &other) {
 				clear();
 				reserve(other.m_size);
@@ -48,7 +48,7 @@ namespace utility {
 
 			return *this;
 		}
-		[[nodiscard]] auto operator=(dynamic_array&& other) noexcept -> dynamic_array& {
+		auto operator=(dynamic_array&& other) noexcept -> dynamic_array& {
 			m_data = std::exchange(other.m_data, nullptr);
 			m_capacity = std::exchange(other.m_capacity, 0);
 			m_size = std::exchange(other.m_size, 0);
@@ -61,6 +61,10 @@ namespace utility {
 		[[nodiscard]] auto operator[](u64 index) const -> const value_type& {
 			return m_data[index];
 		}
+
+		// [[nodiscard]] auto operator==(const dynamic_array& other) const -> bool {
+		// 
+		// }
 
 		void push_back(const element_type& value) {
 			if(m_size >= m_capacity) {
@@ -133,8 +137,8 @@ namespace utility {
 			return m_size == 0;
 		}
 
-		[[nodiscard]] auto size() const -> u64 {
-			return m_size;
+		[[nodiscard]] auto get_data() const -> element_type* {
+			return m_data;
 		}
 
 		[[nodiscard]] auto begin() -> iterator { return m_data; }

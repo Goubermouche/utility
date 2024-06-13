@@ -2,7 +2,6 @@
 
 #pragma once
 #include "dynamic_array.h"
-#include "assert.h"
 
 namespace utility {
 	namespace detail {
@@ -156,12 +155,12 @@ namespace utility {
 			}
 		};
 
-		template<>
-		struct hash<std::string> {
-			auto operator()(const std::string& obj) const noexcept -> u64 {
-				return compute_hash(obj.data(), sizeof(char) * obj.size());
-			}
-		};
+		// template<>
+		// struct hash<std::string> {
+		// 	auto operator()(const std::string& obj) const noexcept -> u64 {
+		// 		return compute_hash(obj.data(), sizeof(char) * obj.get_size());
+		// 	}
+		// };
 	} // namespace detail
 
 	/**
@@ -289,7 +288,7 @@ namespace utility {
 				bucket_idx = next(bucket_idx);
 			}
 
-			auto value_idx = static_cast<value_idx_type>(m_values.size() - 1);
+			auto value_idx = static_cast<value_idx_type>(m_values.get_size() - 1);
 
 			if(is_full()) {
 				increase_size();
@@ -304,7 +303,7 @@ namespace utility {
 		void reserve(u64 capacity) {
 			capacity = std::min(capacity, max_size());
 			m_values.reserve(capacity);
-			auto shifts = calc_shifts_for_size(std::max(capacity, size()));
+			const auto shifts = calc_shifts_for_size(std::max(capacity, size()));
 
 			if(0 == m_num_buckets || shifts < m_shifts) {
 				m_shifts = shifts;
@@ -335,7 +334,7 @@ namespace utility {
 		}
 
 		[[nodiscard]] auto size() const noexcept -> u64 {
-			return m_values.size();
+			return m_values.get_size();
 		}
 		[[nodiscard]] auto is_full() const -> bool {
 			return size() > m_max_bucket_capacity;
@@ -390,7 +389,7 @@ namespace utility {
 		template <typename... Args>
 		auto do_place_element(dist_and_fingerprint_type dist_and_fingerprint, value_idx_type bucket_idx, Args&&... args) -> std::pair<iterator, bool> {
 			m_values.emplace_back(std::forward<Args>(args)...);
-			auto value_idx = static_cast<value_idx_type>(m_values.size() - 1);
+			auto value_idx = static_cast<value_idx_type>(m_values.get_size() - 1);
 
 			if(is_full()) {
 				increase_size();
@@ -473,7 +472,7 @@ namespace utility {
 		void clear_and_fill_buckets_from_values() {
 			clear_buckets();
 
-			for(value_idx_type value_idx = 0, end_idx = static_cast<value_idx_type>(m_values.size()); value_idx < end_idx; ++value_idx) {
+			for(value_idx_type value_idx = 0, end_idx = static_cast<value_idx_type>(m_values.get_size()); value_idx < end_idx; ++value_idx) {
 				auto const& k = get_key(m_values[value_idx]);
 				auto [dist_and_fingerprint, b] = next_while_less(k);
 
@@ -529,7 +528,7 @@ namespace utility {
 			}
 		}
 
-		[[nodiscard]] constexpr auto calc_shifts_for_size(u64 s) const -> u8 {
+		[[nodiscard]] static constexpr auto calc_shifts_for_size(u64 s) const -> u8 {
 			auto shifts = initial_shifts;
 
 			while(shifts > 0 && static_cast<u64>(static_cast<float>(calc_num_buckets(shifts)) * default_max_load_factor) < s) {

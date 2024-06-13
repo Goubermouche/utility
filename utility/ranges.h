@@ -30,22 +30,4 @@ namespace utility {
 
 		return diff;
 	}
-
-	template<typename iterator_type>
-	void iterator_print(iterator_type begin, iterator_type end) {
-		std::cout << '{';
-
-		while(begin != end) {
-			std::cout << *begin;
-			++begin;
-
-			if(begin != end) {
-				std::cout << ", ";
-			}
-			else {
-				std::cout << "}\n";
-				return;
-			}
-		}
-	}
 } // namespace utility

@@ -8,12 +8,23 @@ namespace utility {
 
 		struct constructor {
 			constructor() {
+				#ifdef _WIN32
 				stdout_handle = GetStdHandle(STD_OUTPUT_HANDLE);
 				stderr_handle = GetStdHandle(STD_ERROR_HANDLE);
+				#elif __linux__
+				stdout_handle = STDOUT_FILENO;
+				stdout_handle = STDERR_FILENO;
+				#endif
+				
 			}
 
+			#ifdef _WIN32
 			HANDLE stdout_handle;
 			HANDLE stderr_handle;
+			#elif __linux__
+			i32 stdout_handle;
+			i32 stderr_handle;
+			#endif
 		};
 	public:
 		template<typename type>
@@ -45,12 +56,19 @@ namespace utility {
 		}
 
 		static void write(const char* data, u64 size) {
+			#ifdef _WIN32
 			DWORD bytes_written;
 			WriteConsoleA(m_current_handle, data, static_cast<DWORD>(size), &bytes_written, nullptr);
+			#elif __linux__
+			::write(m_current_handle, data, size);
+			#endif
 		}
 
 		static void flush() {
+			#ifdef _WIN32
 			FlushFileBuffers(m_current_handle);
+			#elif __linux__
+			#endif
 		}
 	protected:
 		template<typename type, typename... types>
@@ -70,10 +88,19 @@ namespace utility {
 			stream_writer<type, console>::write(value);
 		}
 	protected:
+		#ifdef _WIN32
 		static HANDLE m_current_handle;
+		#elif __linux__
+		static i32 m_current_handle;
+		#endif
+
 		static constructor m_value; // static constructor
 	};
 
+	#ifdef _WIN32
 	inline HANDLE console::m_current_handle;
+	#elif __linux__
+	inline i32 console::m_current_handle;
+	#endif
 	inline console::constructor console::m_value;
 } // namespace utility

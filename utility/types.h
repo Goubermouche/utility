@@ -1,12 +1,18 @@
 #pragma once
+#ifdef _WIN32
 #define NOMINMAX
 #include <windows.h>
+#elif __linux__
+#include <unistd.h>
+#endif
 
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
+#include <cmath>
 
 #include <chrono>
+#include <utility>
 
 namespace utility {
 	namespace types {

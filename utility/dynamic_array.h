@@ -2,14 +2,11 @@
 #include "ranges.h"
 
 namespace utility {
-	template <typename element_type, typename size = u64>
+	template <typename value_type, typename size_type = u64>
 	class dynamic_array {
 	public:
-		using iterator = element_type*;
-		using const_iterator = const element_type*;
-
-		using value_type = element_type;
-		using size_type = size;
+		using iterator = value_type*;
+		using const_iterator = const value_type*;
 
 		dynamic_array() : m_data(nullptr), m_capacity(0), m_size(0) {}
 		//dynamic_array(const std::initializer_list<element_type>& values)
@@ -66,12 +63,12 @@ namespace utility {
 		// 
 		// }
 
-		void push_back(const element_type& value) {
+		void push_back(const value_type& value) {
 			if(m_size >= m_capacity) {
 				reserve(m_capacity > 0 ? m_capacity * 2 : 1);
 			}
 
-			if constexpr(std::is_trivial_v<element_type>) {
+			if constexpr(std::is_trivial_v<value_type>) {
 				m_data[m_size++] = value;
 			}
 			else {
@@ -96,7 +93,7 @@ namespace utility {
 
 			--m_size;
 
-			if constexpr(!std::is_trivial_v<element_type>) {
+			if constexpr(!std::is_trivial_v<value_type>) {
 				std::destroy_at(&m_data[m_size]);
 			}
 		}
@@ -106,14 +103,14 @@ namespace utility {
 				return;
 			}
 
-			element_type* new_data = static_cast<element_type*>(utility::malloc(new_capacity * sizeof(element_type)));
+			value_type* new_data = static_cast<value_type*>(utility::malloc(new_capacity * sizeof(value_type)));
 
 			if(new_data == nullptr) {
 				throw std::bad_alloc();
 			}
 
-			if constexpr(std::is_trivial_v<element_type>) {
-				utility::memcpy(new_data, m_data, m_size * sizeof(element_type));
+			if constexpr(std::is_trivial_v<value_type>) {
+				utility::memcpy(new_data, m_data, m_size * sizeof(value_type));
 			}
 			else {
 				construct_range(new_data, begin(), end());
@@ -126,7 +123,7 @@ namespace utility {
 		}
 
 		void clear() {
-			if constexpr(!std::is_trivial_v<element_type>) {
+			if constexpr(!std::is_trivial_v<value_type>) {
 				destruct_range(begin(), end());
 			}
 
@@ -137,7 +134,7 @@ namespace utility {
 			return m_size == 0;
 		}
 
-		[[nodiscard]] auto get_data() const -> element_type* {
+		[[nodiscard]] auto get_data() const -> value_type* {
 			return m_data;
 		}
 
@@ -149,7 +146,7 @@ namespace utility {
 		[[nodiscard]] auto get_size() const -> size_type { return m_size; }
 	protected:
 		void construct(const_iterator begin, const_iterator end, size_type size) {
-			if constexpr(std::is_trivial_v<element_type>) {
+			if constexpr(std::is_trivial_v<value_type>) {
 				utility::memcpy(m_data, begin, size);
 			}
 			else {
@@ -157,7 +154,7 @@ namespace utility {
 			}
 		}
 	protected:
-		element_type* m_data;
+		value_type* m_data;
 		size_type m_capacity;
 		size_type m_size;
 	};

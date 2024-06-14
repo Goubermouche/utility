@@ -9,16 +9,19 @@
 #endif
 
 #ifdef _WIN32
+// windows
 #include <intrin.h>
 
 #define DEBUG_BREAK() __debugbreak()
 #define SYSTEM_WINDOWS
 #elif __linux__
+// linux
 #include <signal.h>
 
 #define DEBUG_BREAK() raise(SIGTRAP)
 #define SYSTEM_LINUX
 #else
+// unknown system
 #error "Unsupported platform!"
 #endif
 

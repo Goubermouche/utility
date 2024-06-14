@@ -68,6 +68,7 @@ namespace utility {
 			#ifdef _WIN32
 			FlushFileBuffers(m_current_handle);
 			#elif __linux__
+			fsync(m_current_handle);
 			#endif
 		}
 	protected:

@@ -1,5 +1,5 @@
 #pragma once
-#include "streams/console.h"
+#include "system/console.h"
 #include "types.h"
 
 #ifdef DEBUG

@@ -11,6 +11,7 @@
 #include <cstring>
 #include <cmath>
 
+#include <initializer_list>
 #include <chrono>
 #include <utility>
 
@@ -46,6 +47,15 @@ namespace utility {
 	}
 	inline void memset(void* destination, i32 value, u64 size) {
 		std::memset(destination, value, size);
+	}
+	inline void memmove(void* destination, const void* source, u64 size) {
+		std::memmove(destination, source, size);
+	}
+	inline auto string_len(const char* str) -> u64 {
+		return std::strlen(str);
+	}
+	inline auto string_len(const wchar_t* str) -> u64 {
+		return std::wcslen(str);
 	}
 
 	template<std::three_way_comparable type>

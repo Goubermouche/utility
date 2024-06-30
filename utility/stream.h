@@ -1,5 +1,7 @@
 #pragma once
-#include "../types.h"
+#include "types.h"
+
+// TODO: f32's and f64's are currently broken
 
 namespace utility {
 	class stream {};
@@ -23,6 +25,13 @@ namespace utility {
 			buffer[1] = '\0';
 
 			stream_type::write(buffer);
+		}
+	};
+
+	template<typename stream_type>
+	struct stream_writer<bool, stream_type> {
+		static void write(bool value) {
+			stream_type::write(value ? "true" : "false");
 		}
 	};
 

@@ -1,5 +1,5 @@
 #pragma once
-#include "stream.h"
+#include "../stream.h"
 
 namespace utility {
 	class console : public stream {
@@ -15,7 +15,6 @@ namespace utility {
 				stdout_handle = STDOUT_FILENO;
 				stdout_handle = STDERR_FILENO;
 				#endif
-				
 			}
 
 			#ifdef _WIN32
@@ -52,16 +51,29 @@ namespace utility {
 		}
 
 		static void write(const char* data) {
-			write(data, std::strlen(data));
+			write(data, string_len(data));
+		}
+
+		static void write(const wchar_t* data) {
+			write(data, string_len(data));
 		}
 
 		static void write(const char* data, u64 size) {
-			#ifdef _WIN32
+#ifdef _WIN32
 			DWORD bytes_written;
 			WriteConsoleA(m_current_handle, data, static_cast<DWORD>(size), &bytes_written, nullptr);
-			#elif __linux__
+#elif __linux__
 			::write(m_current_handle, data, size);
-			#endif
+#endif
+		}
+
+		static void write(const wchar_t* data, u64 size) {
+#ifdef _WIN32
+			DWORD bytes_written;
+			WriteConsoleW(m_current_handle, data, static_cast<DWORD>(size), &bytes_written, nullptr);
+#elif __linux__
+			::write(m_current_handle, data, size * sizeof(wchar_t));
+#endif
 		}
 
 		static void flush() {

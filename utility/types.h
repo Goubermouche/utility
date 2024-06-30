@@ -36,6 +36,9 @@ namespace utility {
 
 	using namespace types;
 
+	template<typename type>
+	using initializer_list = std::initializer_list<type>;
+
 	inline void free(void* data) {
 		std::free(data);
 	}

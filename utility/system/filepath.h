@@ -5,9 +5,10 @@ namespace utility {
 	class filepath {
 	public:
 		using size_type = u64;
+		using element_type = dynamic_string::element_type;
 
 		filepath() = default;
-		filepath(const char* str) : m_data(str) {}
+		filepath(const element_type* str) : m_data(str) {}
 		filepath(const dynamic_string& str) : m_data(str) {}
 
 		auto get_string() const -> const dynamic_string& {
@@ -23,7 +24,8 @@ namespace utility {
 				m_data += '/';
 			}
 
-			m_data.insert(m_data.end(), other.get_string().begin(), other.get_string().end());
+			auto& str = other.get_string();
+			m_data.insert(m_data.end(), str.begin(), str.end());
 
 			return *this;
 		}

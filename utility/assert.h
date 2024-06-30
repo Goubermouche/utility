@@ -30,7 +30,7 @@
   do {                                                     \
     if(!(__condition)) {                                   \
       utility::console::print_err(__message, __VA_ARGS__); \
-			utility::console::flush();                           \
+      utility::console::flush();                           \
       DEBUG_BREAK();                                       \
     }                                                      \
   } while(false)

@@ -3,12 +3,14 @@
 #include "../ranges.h"
 
 namespace utility {
-	template<typename char_type, typename size_type>
+	template<typename value, typename size>
 	class dynamic_string_base {
 	public:
-		using iterator = char_type*;
-		using const_iterator = const char_type*;
-		using element_type = char_type;
+		using element_type = value;
+		using size_type = size;
+
+		using const_iterator = const element_type*;
+		using iterator = element_type*;
 
 		dynamic_string_base() {
 			reserve(0);
@@ -23,12 +25,6 @@ namespace utility {
 			utility::memcpy(m_data, value, m_size * sizeof(element_type));
 			m_data[m_size] = 0;
 		}
-
-		// TODO
-		// template<typename type, typename... types>
-		// dynamic_string(const char* format, const type& first, const types&... rest) {
-		// 	
-		// }
 
 		[[nodiscard]] auto operator==(const element_type* other) const -> bool {
 			const size_type len = string_len(other);
@@ -146,54 +142,6 @@ namespace utility {
 			m_capacity = new_capacity;
 		}
 
-		auto find(element_type c, size_type start_index = 0) const -> size_type {
-			if(start_index >= get_size()) {
-				return npos;
-			}
-
-			for(size_type i = start_index; i < get_size(); ++i) {
-				if(m_data[i] == c) {
-					return i;
-				}
-			}
-
-			return npos;
-		}
-
-		auto find_last_of(element_type c, size_type start_index = 0) const -> size_type {
-			if(start_index >= get_size()) {
-				return npos;
-			}
-
-			for(size_type i = get_size() - 1; i >= start_index; --i) {
-				if(m_data[i] == c) {
-					return i;
-				}
-			}
-
-			return npos;
-		}
-
-		auto substring(size_type start, size_type count = npos) const -> dynamic_string_base {
-			size_type length;
-
-			if(count == npos) {
-				length = get_size() - start;
-			}
-			else {
-				length = count;
-			}
-
-			dynamic_string_base new_string;
-			new_string.reserve(length);
-			new_string.m_size = length;
-
-			std::memcpy(new_string.m_data, begin() + start, length * sizeof(element_type));
-			new_string.m_data[length] = 0;
-
-			return new_string;
-		}
-
 		void replace(size_type start, size_type count, const dynamic_string_base& new_content) {
 			if(start >= m_size) {
 				return;
@@ -225,6 +173,54 @@ namespace utility {
 			m_data[m_size] = 0;
 		}
 
+		[[nodiscard]] auto find(element_type c, size_type start_index = 0) const -> size_type {
+			if(start_index >= get_size()) {
+				return npos;
+			}
+
+			for(size_type i = start_index; i < get_size(); ++i) {
+				if(m_data[i] == c) {
+					return i;
+				}
+			}
+
+			return npos;
+		}
+
+		[[nodiscard]] auto find_last_of(element_type c, size_type start_index = 0) const -> size_type {
+			if(start_index >= get_size()) {
+				return npos;
+			}
+
+			for(size_type i = get_size() - 1; i >= start_index; --i) {
+				if(m_data[i] == c) {
+					return i;
+				}
+			}
+
+			return npos;
+		}
+
+		[[nodiscard]] auto substring(size_type start, size_type count = npos) const -> dynamic_string_base {
+			size_type length;
+
+			if(count == npos) {
+				length = get_size() - start;
+			}
+			else {
+				length = count;
+			}
+
+			dynamic_string_base new_string;
+			new_string.reserve(length);
+			new_string.m_size = length;
+
+			std::memcpy(new_string.m_data, begin() + start, length * sizeof(element_type));
+			new_string.m_data[length] = 0;
+
+			return new_string;
+		}
+
 		[[nodiscard]] auto is_empty() const -> bool {
 			return m_size == 0;
 		}
@@ -232,6 +228,7 @@ namespace utility {
 		[[nodiscard]] auto get_data() const -> element_type* {
 			return m_data;
 		}
+
 		[[nodiscard]] auto get_last() const -> element_type {
 			if(is_empty()) {
 				return EOF;
@@ -246,7 +243,6 @@ namespace utility {
 		[[nodiscard]] auto end() const -> const_iterator { return m_data + m_size; }
 		[[nodiscard]] auto get_capacity() const -> size_type { return m_capacity; }
 		[[nodiscard]] auto get_size() const -> size_type { return m_size; }
-		
 	public:
 		static constexpr size_type npos = std::numeric_limits<size_type>::max();
 	protected:

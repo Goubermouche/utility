@@ -1,6 +1,7 @@
 #pragma once
 #include "../stream.h"
 #include "../ranges.h"
+#include "../assert.h"
 
 namespace utility {
 	template<typename value, typename size>
@@ -17,63 +18,22 @@ namespace utility {
 			m_data[0] = 0;
 			m_size = 0;
 		}
-
-		dynamic_string_base(const element_type* value) {
-			const size_type length = string_len(value);
+		dynamic_string_base(const element_type* str) {
+			const size_type length = string_len(str);
 			reserve(length);
 			m_size = length;
-			utility::memcpy(m_data, value, m_size * sizeof(element_type));
+			utility::memcpy(m_data, str, m_size * sizeof(element_type));
 			m_data[m_size] = 0;
 		}
-
-		[[nodiscard]] auto operator==(const element_type* other) const -> bool {
-			const size_type len = string_len(other);
-
-			if(len != m_size) {
-				return false;
-			}
-
-			for(size_type i = 0; i < len; ++i) {
-				if(other[i] != m_data[i]) {
-					return false;
-				}
-			}
-
-			return true;
+		dynamic_string_base(const dynamic_string_base& other) {
+			reserve(other.get_size());
+			m_size = other.get_size();
+			utility::memcpy(m_data, other.get_data(), (m_size + 1) * sizeof(element_type));
 		}
 
-		[[nodiscard]] auto operator[](size_type index) -> element_type& {
-			return m_data[index];
-		}
-
-		[[nodiscard]] auto operator[](size_type index) const -> const element_type& {
-			return m_data[index];
-		}
-
-		auto operator+=(element_type c) -> dynamic_string_base& {
-			reserve(m_size + 1);
-			++m_size;
-			m_data[m_size] = 0;
-			m_data[m_size - 1] = c;
-
-			return *this;
-		}
-
-		auto operator+=(const element_type* other) -> dynamic_string_base& {
-			size_type length = string_len(other);
-			reserve(m_size + length);
-			utility::memcpy(m_data + m_size, other, sizeof(element_type) * (length + 1));
-			m_size += length;
-
-			return *this;
-		}
-
-		auto operator+=(const dynamic_string_base& other) -> dynamic_string_base& {
-			reserve(m_size + other.get_size());
-			utility::memcpy(m_data + m_size, other.begin(), sizeof(element_type) * (other.get_size() + 1));
-			m_size += other.get_size();
-
-			return *this;
+		~dynamic_string_base() {
+			clear();
+			utility::free(m_data);
 		}
 
 		template<typename iterator_type>
@@ -141,7 +101,14 @@ namespace utility {
 			m_data = new_data;
 			m_capacity = new_capacity;
 		}
+		void resize(u64 new_size) {
+			if(m_size < new_size) {
+				reserve(new_size);
+			}
 
+			m_data[new_size] = 0;
+			m_size = new_size;
+		}
 		void replace(size_type start, size_type count, const dynamic_string_base& new_content) {
 			if(start >= m_size) {
 				return;
@@ -172,10 +139,14 @@ namespace utility {
 			m_size = new_size;
 			m_data[m_size] = 0;
 		}
+		void clear() {
+			m_data[0] = 0;
+			m_size = 0;
+		}
 
 		[[nodiscard]] auto find(element_type c, size_type start_index = 0) const -> size_type {
 			if(start_index >= get_size()) {
-				return npos;
+				return invalid_pos;
 			}
 
 			for(size_type i = start_index; i < get_size(); ++i) {
@@ -184,27 +155,25 @@ namespace utility {
 				}
 			}
 
-			return npos;
+			return invalid_pos;
 		}
-
 		[[nodiscard]] auto find_last_of(element_type c, size_type start_index = 0) const -> size_type {
 			if(start_index >= get_size()) {
-				return npos;
+				return invalid_pos;
 			}
 
-			for(size_type i = get_size() - 1; i >= start_index; --i) {
+			for(size_type i = get_size(); i-- > start_index;) {
 				if(m_data[i] == c) {
 					return i;
 				}
 			}
 
-			return npos;
+			return invalid_pos;
 		}
-
-		[[nodiscard]] auto substring(size_type start, size_type count = npos) const -> dynamic_string_base {
+		[[nodiscard]] auto substring(size_type start, size_type count = invalid_pos) const -> dynamic_string_base {
 			size_type length;
 
-			if(count == npos) {
+			if(count == invalid_pos) {
 				length = get_size() - start;
 			}
 			else {
@@ -228,7 +197,6 @@ namespace utility {
 		[[nodiscard]] auto get_data() const -> element_type* {
 			return m_data;
 		}
-
 		[[nodiscard]] auto get_last() const -> element_type {
 			if(is_empty()) {
 				return EOF;
@@ -236,15 +204,81 @@ namespace utility {
 
 			return m_data[m_size - 1];
 		}
+		[[nodiscard]] auto get_capacity() const -> size_type { return m_capacity; }
+		[[nodiscard]] auto get_size() const -> size_type { return m_size; }
 
 		[[nodiscard]] auto begin() -> iterator { return m_data; }
 		[[nodiscard]] auto end() -> iterator { return m_data + m_size; }
 		[[nodiscard]] auto begin() const -> const_iterator { return m_data; }
 		[[nodiscard]] auto end() const -> const_iterator { return m_data + m_size; }
-		[[nodiscard]] auto get_capacity() const -> size_type { return m_capacity; }
-		[[nodiscard]] auto get_size() const -> size_type { return m_size; }
+
+		[[nodiscard]] auto operator==(const element_type* other) const -> bool {
+			const size_type len = string_len(other);
+
+			if(len != m_size) {
+				return false;
+			}
+
+			for(size_type i = 0; i < len; ++i) {
+				if(other[i] != m_data[i]) {
+					return false;
+				}
+			}
+
+			return true;
+		}
+		[[nodiscard]] auto operator[](size_type index) -> element_type& {
+			return m_data[index];
+		}
+		[[nodiscard]] auto operator[](size_type index) const -> const element_type& {
+			return m_data[index];
+		}
+
+		auto operator+=(element_type c) -> dynamic_string_base& {
+			reserve(m_size + 1);
+			++m_size;
+			m_data[m_size] = 0;
+			m_data[m_size - 1] = c;
+
+			return *this;
+		}
+		auto operator+=(const element_type* other) -> dynamic_string_base& {
+			size_type length = string_len(other);
+			reserve(m_size + length);
+			utility::memcpy(m_data + m_size, other, sizeof(element_type) * (length + 1));
+			m_size += length;
+
+			return *this;
+		}
+		auto operator+=(const dynamic_string_base& other) -> dynamic_string_base& {
+			reserve(m_size + other.get_size());
+			utility::memcpy(m_data + m_size, other.begin(), sizeof(element_type) * (other.get_size() + 1));
+			m_size += other.get_size();
+
+			return *this;
+		}
+
+		friend auto operator+(const dynamic_string_base& left, const dynamic_string_base& right) ->dynamic_string_base {
+			dynamic_string_base result = left;
+
+			result.reserve(result.m_size + right.get_size());
+			utility::memcpy(result.m_data + result.m_size, right.begin(), sizeof(element_type) * (right.get_size() + 1));
+			result.m_size += right.get_size();
+
+			return result;
+		}
+		friend auto operator+(const dynamic_string_base& left, element_type c) ->dynamic_string_base {
+			dynamic_string_base result = left;
+
+			result.reserve(result.m_size + 1);
+			++result.m_size;
+			result.m_data[result.m_size] = 0;
+			result.m_data[result.m_size - 1] = c;
+
+			return result;
+		}
 	public:
-		static constexpr size_type npos = std::numeric_limits<size_type>::max();
+		static constexpr size_type invalid_pos = std::numeric_limits<size_type>::max();
 	protected:
 		element_type* m_data = nullptr;
 		size_type m_capacity = size_type();
@@ -260,4 +294,24 @@ namespace utility {
 
 	using dynamic_string = dynamic_string_base<char, u64>;
 	using dynamic_string_w = dynamic_string_base<wchar_t, u64>;
+
+	inline auto string_to_string_w(const dynamic_string& str) -> dynamic_string_w {
+		dynamic_string_w result;
+		result.resize(str.get_size());
+
+		const i32 written = swprintf(result.get_data(), str.get_size() + 1, L"%hs", str.get_data());
+		ASSERT(written == static_cast<i32>(str.get_size()), "invalid string");
+
+		return result;
+	}
+
+	inline auto string_w_to_string(const dynamic_string_w& str) -> dynamic_string {
+		dynamic_string result;
+		result.resize(str.get_size());
+
+		const u64 written = wcstombs(result.get_data(), str.get_data(), str.get_size() + 1);
+		ASSERT(written == str.get_size(), "invalid string");
+
+		return result;
+	}
 } // namespace utility

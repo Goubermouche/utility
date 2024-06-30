@@ -9,6 +9,8 @@
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
+#include <stdio.h>
+#include <tchar.h>
 #include <cmath>
 
 #include <initializer_list>

@@ -348,7 +348,7 @@ namespace utility {
 			return size() > m_max_bucket_capacity;
 		}
 		[[nodiscard]] auto empty() const noexcept -> bool {
-			return m_values.empty();
+			return m_values.is_empty();
 		}
 	protected:
 		template <class... Args>

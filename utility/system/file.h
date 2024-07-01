@@ -5,16 +5,15 @@
 namespace utility {
 	struct directory {
 		static auto collect_files(const filepath& root_path) -> dynamic_array<filepath> {
-			// TODO: cleanup
 			if(!root_path.is_directory()) {
 				return {}; // root_path is not a directory
 			}
 
 			dynamic_array<filepath> result;
 			dynamic_array<dynamic_string_w> folders;
-			folders.push_back(string_to_string_w(root_path.get_string()));
+			const dynamic_string_w root_w = string_to_string_w(root_path.get_string());
 
-			dynamic_string_w root_w = string_to_string_w(root_path.get_string());
+			folders.push_back(string_to_string_w(root_path.get_string()));
 
 			while(!folders.is_empty()) {
 				const dynamic_string_w current = folders.pop_back();
@@ -23,7 +22,8 @@ namespace utility {
 				WIN32_FIND_DATAW fdFile;
 				HANDLE hFind;
 
-				swprintf(temp_path, L"%s/*.*", current.get_data());
+				i32 written = swprintf(temp_path, 2048, L"%s/*.*", current.get_data());
+				ASSERT(written > 0, "invalid path detected");
 
 				if((hFind = FindFirstFileW(temp_path, &fdFile)) == INVALID_HANDLE_VALUE) {
 					ASSERT(false, "Path '{}' not found", current);
@@ -33,7 +33,8 @@ namespace utility {
 				do {
 					// find first file will always return "." and ".." as the first two directories.
 					if(wcscmp(fdFile.cFileName, L".") != 0 && wcscmp(fdFile.cFileName, L"..") != 0) {
-						swprintf(temp_path, L"%s/%s", current.get_data(), fdFile.cFileName);
+						written = swprintf(temp_path, 2048, L"%s/%s", current.get_data(), fdFile.cFileName);
+						ASSERT(written > 0, "invalid path detected");
 
 						if(fdFile.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
 							// folder

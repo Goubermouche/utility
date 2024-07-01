@@ -30,10 +30,16 @@ namespace utility {
 			m_size = other.get_size();
 			utility::memcpy(m_data, other.get_data(), (m_size + 1) * sizeof(element_type));
 		}
+		dynamic_string_base(dynamic_string_base&& other) noexcept :
+		m_data(std::exchange(other.m_data, nullptr)), m_capacity(std::exchange(other.m_capacity, 0)), m_size(std::exchange(other.m_size, 0)) {}
 
 		~dynamic_string_base() {
-			clear();
-			utility::free(m_data);
+			if(m_data) {
+				utility::free(m_data);
+				m_size = 0;
+				m_capacity = 0;
+				m_data = nullptr;
+			}
 		}
 
 		template<typename iterator_type>
@@ -140,6 +146,10 @@ namespace utility {
 			m_data[m_size] = 0;
 		}
 		void clear() {
+			if(is_empty()) {
+				return;
+			}
+
 			m_data[0] = 0;
 			m_size = 0;
 		}
@@ -298,6 +308,24 @@ namespace utility {
 
 			return *this;
 		}
+		auto operator=(const dynamic_string_base& other) -> dynamic_string_base& {
+			if(this != &other) {
+				this->~dynamic_string_base();
+
+				reserve(other.get_size());
+				m_size = other.get_size();
+				utility::memcpy(m_data, other.get_data(), (m_size + 1) * sizeof(element_type));
+			}
+
+			return *this;
+		}
+		auto operator=(dynamic_string_base&& other) noexcept -> dynamic_string_base& {
+			m_capacity = std::exchange(other.m_capacity, m_capacity);
+			m_size = std::exchange(other.m_size, m_size);
+			m_data = std::exchange(other.m_data, m_data);
+
+			return *this;
+		}
 
 		friend auto operator+(const dynamic_string_base& left, const dynamic_string_base& right) ->dynamic_string_base {
 			dynamic_string_base result = left;
@@ -350,7 +378,10 @@ namespace utility {
 		dynamic_string result;
 		result.resize(str.get_size());
 
+#pragma warning(push)
+#pragma warning(disable : 4996)
 		const u64 written = wcstombs(result.get_data(), str.get_data(), str.get_size() + 1);
+#pragma warning(pop) 
 		ASSERT(written == str.get_size(), "invalid string");
 
 		return result;

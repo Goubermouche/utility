@@ -83,6 +83,16 @@ namespace utility {
 	};
 
 	struct file {
+		static auto exists(const filepath& path) -> bool {
+			const DWORD attr = GetFileAttributesA(path.get_data());
+
+			if(attr != INVALID_FILE_ATTRIBUTES) {
+				return true;
+			}
+
+			return false;
+		}
+
 		static auto read(const filepath& path) -> dynamic_string {
 			FILE* file;
 			dynamic_string result;

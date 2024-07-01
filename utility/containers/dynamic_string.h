@@ -143,6 +143,47 @@ namespace utility {
 			m_data[0] = 0;
 			m_size = 0;
 		}
+		auto trim() -> dynamic_string_base {
+			dynamic_string_base result;
+			size_type index = {};
+			size_type start_index;
+
+			// leading whitespace
+			while(std::isspace(m_data[index])) {
+				++index;
+			}
+
+			// all spaces
+			if(m_data[index] == 0) {
+				return {};
+			}
+
+			start_index = index;
+
+			// trailing whitespace
+			index = m_size - 1;
+
+			while(index > start_index && std::isspace(m_data[index])) {
+				--index;
+			}
+
+			const size_type length = index - start_index + 1;
+			result.resize(length);
+			std::memcpy(result.m_data, begin() + start_index, length * sizeof(element_type));
+
+			return result;
+		}
+		auto remove_trailing(element_type c) -> dynamic_string_base {
+			size_type i;
+
+			for(i = get_size(); i-- > 0;) {
+				if(m_data[i] != c) {
+					break;
+				}
+			}
+
+			return substring(0, i + 1);
+		}
 
 		[[nodiscard]] auto find(element_type c, size_type start_index = 0) const -> size_type {
 			if(start_index >= get_size()) {

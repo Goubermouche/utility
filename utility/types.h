@@ -63,6 +63,13 @@ namespace utility {
 		return std::wcslen(str);
 	}
 
+	template<typename type>
+	void swap(type& left, type& right) noexcept {
+		type temp = std::move(left);
+		left = std::move(right);
+		right = std::move(temp);
+	}
+
 	template<std::three_way_comparable type>
 	struct range {
 		constexpr range() : start(type()), end(type()) {}

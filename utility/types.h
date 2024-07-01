@@ -70,6 +70,14 @@ namespace utility {
 		right = std::move(temp);
 	}
 
+	inline auto sign_extend(u64 x, u8 x_bits, u8 n) -> u64 {
+		if((x >> (x_bits - 1)) & 1) {
+			x |= ((std::numeric_limits<u64>::max()) << x_bits) >> n;
+		}
+
+		return x;
+	}
+
 	template<std::three_way_comparable type>
 	struct range {
 		constexpr range() : start(type()), end(type()) {}
@@ -134,23 +142,6 @@ namespace utility {
 		[[nodiscard]] friend auto operator+(const byte& a, const byte& b) -> byte { return a.m_value + b.m_value; }
 	private:
 		u8 m_value;
-	};
-
-	class dword {
-	public:
-		constexpr dword() : m_value(0) {}
-		constexpr dword(u32 value) : m_value(value) {}
-
-		[[nodiscard]] constexpr operator u32() const { return m_value; }
-		[[nodiscard]] constexpr auto operator<=>(const dword& other) const->std::strong_ordering = default;
-		[[nodiscard]] constexpr auto operator~() const -> dword { return ~m_value; }
-		[[nodiscard]] constexpr auto operator&(const dword& other) const -> dword { return m_value & other.m_value; }
-		[[nodiscard]] constexpr auto operator|(const dword& other) const -> dword { return m_value | other.m_value; }
-		[[nodiscard]] constexpr auto operator^(const dword& other) const -> dword { return m_value ^ other.m_value; }
-		[[nodiscard]] constexpr auto operator<<(i32 shift) const -> dword { return static_cast<u8>(m_value << shift); }
-		[[nodiscard]] constexpr auto operator>>(i32 shift) const -> dword { return m_value >> shift; }
-	private:
-		u32 m_value;
 	};
 } // namespace utility
 

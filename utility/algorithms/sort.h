@@ -1,37 +1,50 @@
 #pragma once
-#include "../ranges.h"
+#include "../containers/dynamic_array.h"
+#include "../type_traits.h"
 
 namespace utility {
 	template<typename iterator, typename compare>
-	void sort(iterator begin, iterator end, const compare& comp) {
-		if(distance(begin, end) <= 1) {
+	void merge(iterator first, iterator middle, iterator last, compare comp) {
+		dynamic_array<typename iterator_traits<iterator>::element_type> buffer;
+
+		buffer.reserve(utility::distance(first, last));
+
+		iterator left = first;
+		iterator right = middle;
+
+		while(left != middle && right != last) {
+			if(comp(*right, *left)) {
+				buffer.push_back(std::move(*right++));
+			}
+			else {
+				buffer.push_back(std::move(*left++));
+			}
+		}
+
+		buffer.insert(buffer.end(), left, middle);
+		buffer.insert(buffer.end(), right, last);
+
+		std::move(buffer.begin(), buffer.end(), first);
+	}
+
+	template<typename iterator, typename compare>
+	void merge_sort(iterator first, iterator last, compare comp) {
+		auto size = distance(first, last);
+
+		if(size < 2) {
 			return;
 		}
 
-		iterator pivot = begin + distance(begin, end) / 2;
-		auto pivot_value = *pivot;
+		iterator middle = first + size / 2;
 
-		iterator left = begin;
-		iterator right = end - 1;
+		merge_sort(first, middle, comp);
+		merge_sort(middle, last, comp);
 
-		while(left <= right) {
-			while(comp(*left, pivot_value)) {
-				++left;
-			}
+		merge(first, middle, last, comp);
+	}
 
-			while(comp(pivot_value, *right)) {
-				--right;
-			}
-
-			if(left <= right) {
-				swap(*left, *right);
-
-				++left;
-				--right;
-			}
-		}
-
-		sort(begin, right + 1, comp);
-		sort(left, end, comp);
+	template<typename iterator, typename compare>
+	void stable_sort(iterator begin, iterator end, const compare& comp) {
+		merge_sort(begin, end, comp);
 	}
 } // namespace utility

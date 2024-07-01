@@ -80,7 +80,7 @@ namespace utility {
 				return;
 			}
 
-			size_type num_elements_to_insert = distance(first, last);
+			size_type num_elements_to_insert = utility::distance(first, last);
 			size_type index = distance(begin(), pos);
 
 			// ensure there is enough space for the new elements

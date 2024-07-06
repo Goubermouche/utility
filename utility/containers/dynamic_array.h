@@ -177,10 +177,10 @@ namespace utility {
 			m_size = std::exchange(other.m_size, 0);
 			return *this;
 		}
-		[[nodiscard]] auto operator[](u64 index) -> element_type& {
+		[[nodiscard]] auto operator[](size_type index) -> element_type& {
 			return m_data[index];
 		}
-		[[nodiscard]] auto operator[](u64 index) const -> const element_type& {
+		[[nodiscard]] auto operator[](size_type index) const -> const element_type& {
 			return m_data[index];
 		}
 	protected:

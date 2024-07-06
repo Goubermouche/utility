@@ -28,9 +28,11 @@ namespace utility {
 		[[nodiscard]] constexpr auto end() const -> const_iterator { return m_data + size; }
 
 		[[nodiscard]] constexpr auto operator[](size_type index) -> element_type& {
+			ASSERT(index < size, "index out of range");
 			return m_data[index];
 		}
 		[[nodiscard]] constexpr auto operator[](size_type index) const -> const element_type& {
+			ASSERT(index < size, "index out of range");
 			return m_data[index];
 		}
 	private:

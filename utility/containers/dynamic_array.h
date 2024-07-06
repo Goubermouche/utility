@@ -120,10 +120,7 @@ namespace utility {
 			}
 
 			element_type* new_data = static_cast<element_type*>(utility::malloc(new_capacity * sizeof(element_type)));
-
-			if(new_data == nullptr) {
-				throw std::bad_alloc();
-			}
+			ASSERT(new_data, "allocation failure");
 
 			if constexpr(std::is_trivial_v<element_type>) {
 				utility::memcpy(new_data, m_data, m_size * sizeof(element_type));
@@ -178,9 +175,11 @@ namespace utility {
 			return *this;
 		}
 		[[nodiscard]] auto operator[](size_type index) -> element_type& {
+			ASSERT(index < m_size, "index out of range");
 			return m_data[index];
 		}
 		[[nodiscard]] auto operator[](size_type index) const -> const element_type& {
+			ASSERT(index < m_size, "index out of range");
 			return m_data[index];
 		}
 	protected:

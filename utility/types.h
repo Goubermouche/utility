@@ -6,16 +6,14 @@
 #include <unistd.h>
 #endif
 
+#include "./type_traits.h"
+
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
-#include <stdio.h>
-#include <tchar.h>
-#include <cmath>
 
 #include <initializer_list>
 #include <chrono>
-#include <utility>
 
 namespace utility {
 	namespace types {
@@ -41,6 +39,8 @@ namespace utility {
 	template<typename type>
 	using initializer_list = std::initializer_list<type>;
 
+	// memory
+
 	inline void free(void* data) {
 		std::free(data);
 	}
@@ -56,101 +56,18 @@ namespace utility {
 	inline void memmove(void* destination, const void* source, u64 size) {
 		std::memmove(destination, source, size);
 	}
+
+	// strings
+
 	inline auto string_len(const char* str) -> u64 {
 		return std::strlen(str);
 	}
 	inline auto string_len(const wchar_t* str) -> u64 {
 		return std::wcslen(str);
 	}
-
-	template<typename type>
-	void swap(type& left, type& right) noexcept {
-		type temp = std::move(left);
-		left = std::move(right);
-		right = std::move(temp);
+	inline auto is_space(char c) noexcept -> bool {
+		return (c == '\t' || c == '\n' || c == '\v' || c == '\f' || c == '\r' || c == ' ');
 	}
-
-	template <typename type, typename other = type>
-	constexpr auto exchange(type& value, other&& new_value) noexcept -> type {
-		type old = static_cast<type&&>(value);
-		value = static_cast<other&&>(new_value);
-		return old;
-	}
-
-	template <class type>
-		struct remove_reference {
-		using element_type = type;
-		using _Const_thru_ref_type = const type;
-	};
-
-	template <class type>
-	struct remove_reference<type&> {
-		using element_type = type;
-		using _Const_thru_ref_type = const type&;
-	};
-
-	template <class type>
-	struct remove_reference<type&&> {
-		using element_type = type;
-		using _Const_thru_ref_type = const type&&;
-	};
-
-	template <class type>
-	using remove_reference_t = typename remove_reference<type>::element_type;
-
-	template <class>
-	constexpr bool is_lvalue_reference = false; 
-
-	template <class _Ty>
-	constexpr bool is_lvalue_reference<_Ty&> = true;
-
-	template<typename type>
-	constexpr auto forward(remove_reference_t<type>& arg) noexcept -> type&& {
-		return static_cast<type&&>(arg);
-	}
-
-	template<typename type>
-	constexpr auto forward(remove_reference_t<type>&& arg) noexcept -> type&& {
-		static_assert(!is_lvalue_reference<type>, "bad forward call");
-		return static_cast<type&&>(arg);
-	}
-
-	template<typename type, typename... types>
-	constexpr auto construct_at(type* const location, types&&... args) noexcept(
-		noexcept(::new(static_cast<void*>(location)) type(forward<types>(args)...))
-	) -> type* {
-		return ::new(static_cast<void*>(location)) type(forward<types>(args)...);
-	}
-
-	template<typename type>
-	constexpr auto move(type&& value) noexcept -> remove_reference_t<type>&& {
-		return static_cast<remove_reference_t<type>&&>(value);
-	}
-
-
-	template<std::three_way_comparable type>
-	struct range {
-		constexpr range() : start(type()), end(type()) {}
-		constexpr range(const type& start, const type& end) : start(start), end(end) {}
-
-		[[nodiscard]] constexpr auto contains(const range& other) const -> bool {
-			return start <= other.start && end >= other.end;
-		}
-
-		[[nodiscard]] constexpr auto overlaps(const range& other) const -> bool {
-			return start < other.end && end > other.start;
-		}
-
-		[[nodiscard]] constexpr auto operator<=>(const range& other) const -> std::strong_ordering = default;
-
-		friend auto operator<<(std::ostream& stream, const range& range) -> std::ostream& {
-			stream << range.start << ':' << range.end;
-			return stream;
-		}
-
-		type start;
-		type end;
-	};
 
 	class timer {
 	public:
@@ -194,8 +111,14 @@ namespace utility {
 		u8 m_value;
 	};
 
-	inline auto is_space(char c) noexcept -> bool {
-		return (c == '\t' || c == '\n' || c == '\v' || c == '\f' || c == '\r' || c == ' ');
+	template<typename a, typename b = a>
+	auto min(a left, b right) {
+		return left > right ? right : left;
+	}
+
+	template<typename a, typename b = a>
+	auto max(a left, b right) {
+		return left > right ? left : right;
 	}
 
 	template<typename type>
@@ -285,19 +208,9 @@ namespace utility {
 		}
 
 		[[nodiscard]] static constexpr auto min() noexcept -> i64 {
-			return -9223372036854775808;
+			return -9223372036854775808ll;
 		}
 	};
-
-	template<typename a, typename b = a>
-	auto min(a left, b right) {
-		return left > right ? right : left;
-	}
-
-	template<typename a, typename b = a>
-	auto max(a left, b right) {
-		return left > right ? left : right;
-	}
 
 	inline auto sign_extend(u64 x, u8 x_bits, u8 n) -> u64 {
 		if((x >> (x_bits - 1)) & 1) {

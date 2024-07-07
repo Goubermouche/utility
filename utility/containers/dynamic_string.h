@@ -1,5 +1,4 @@
 #pragma once
-#include "../type_traits.h"
 #include "../stream.h"
 #include "../ranges.h"
 #include "../assert.h"
@@ -58,7 +57,7 @@ namespace utility {
 			}
 
 			// move existing elements to make space for the new elements
-			if constexpr(is_trivial<element_type>) {
+			if constexpr(is_trivial_v<element_type>) {
 				utility::memmove(
 					m_data + index + num_elements_to_insert,
 					m_data + index,
@@ -93,7 +92,7 @@ namespace utility {
 			element_type* new_data = static_cast<element_type*>(utility::malloc(new_capacity * sizeof(element_type)));
 			ASSERT(new_data, "allocation failure");
 
-			if constexpr(is_trivial<element_type>) {
+			if constexpr(is_trivial_v<element_type>) {
 				utility::memcpy(new_data, m_data, m_size * sizeof(element_type));
 			}
 			else {
@@ -124,7 +123,7 @@ namespace utility {
 				reserve(new_size);
 			}
 
-			if constexpr(is_trivial<element_type>) {
+			if constexpr(is_trivial_v<element_type>) {
 				utility::memmove(
 					m_data + start + new_content.get_size(),
 					m_data + start + count,

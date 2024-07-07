@@ -1,7 +1,6 @@
 #pragma once
 #include "../ranges.h"
 #include "../assert.h"
-#include "../type_traits.h"
 
 namespace utility {
 	template <typename value, typename size = u64>
@@ -44,7 +43,7 @@ namespace utility {
 				reserve(m_capacity > 0 ? m_capacity * 2 : 1);
 			}
 
-			if constexpr(is_trivial<element_type>) {
+			if constexpr(is_trivial_v<element_type>) {
 				m_data[m_size++] = val;
 			}
 			else {
@@ -86,7 +85,7 @@ namespace utility {
 			}
 
 			// move existing elements to make space for the new elements
-			if constexpr(is_trivial<element_type>) {
+			if constexpr(is_trivial_v<element_type>) {
 				utility::memmove(
 					m_data + index + num_elements_to_insert,
 					m_data + index,
@@ -119,7 +118,7 @@ namespace utility {
 			element_type* new_data = static_cast<element_type*>(utility::malloc(new_capacity * sizeof(element_type)));
 			ASSERT(new_data, "allocation failure");
 
-			if constexpr(is_trivial<element_type>) {
+			if constexpr(is_trivial_v<element_type>) {
 				utility::memcpy(new_data, m_data, m_size * sizeof(element_type));
 			}
 			else {
@@ -132,7 +131,7 @@ namespace utility {
 			m_capacity = new_capacity;
 		}
 		void clear() {
-			if constexpr(!is_trivial<element_type>) {
+			if constexpr(!is_trivial_v<element_type>) {
 				destruct_range(begin(), end());
 			}
 
@@ -181,7 +180,7 @@ namespace utility {
 		}
 	protected:
 		void construct(const_iterator begin, const_iterator end, size_type count) {
-			if constexpr(is_trivial<element_type>) {
+			if constexpr(is_trivial_v<element_type>) {
 				utility::memcpy(m_data, begin, count * sizeof(element_type));
 			}
 			else {

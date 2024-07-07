@@ -39,15 +39,15 @@ namespace utility {
 
 		block_allocator(const block_allocator& other) = delete;
 		block_allocator(block_allocator&& other) noexcept {
-			*this = std::move(other);
+			*this = move(other);
 		}
 
 		block_allocator& operator=(const block_allocator& other) = delete;
 		block_allocator& operator=(block_allocator&& other) {
 			if(&other != this) {
-				m_first_block = std::exchange(other.m_first_block, nullptr);
-				m_current_block = std::exchange(other.m_first_block, nullptr);
-				m_block_size = std::exchange(other.m_block_size, 0);
+				m_first_block = exchange(other.m_first_block, nullptr);
+				m_current_block = exchange(other.m_first_block, nullptr);
+				m_block_size = exchange(other.m_block_size, 0);
 			}
 
 			return *this;
@@ -83,7 +83,7 @@ namespace utility {
 
 		template<typename type, typename... value_types>
 		[[nodiscard]] auto emplace(value_types&&... values) -> type* {
-			return new (allocate(sizeof(type))) type(std::forward<value_types>(values)...);
+			return new (allocate(sizeof(type))) type(forward<value_types>(values)...);
 		}
 
 		auto create_safepoint() const -> safepoint {
@@ -113,6 +113,8 @@ namespace utility {
 			}
 
 			const auto memory = static_cast<u8*>(utility::malloc(m_block_size));
+			ASSERT(memory, "allocation failure");
+
 			const auto new_block = new block(memory);
 
 			if(m_current_block) {

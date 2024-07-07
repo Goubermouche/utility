@@ -18,7 +18,7 @@ namespace utility {
 			while(!folders.is_empty()) {
 				const dynamic_string_w current = folders.pop_back();
 
-				wchar_t temp_path[2048];
+				wchar_t temp_path[2048] = {0};
 				WIN32_FIND_DATAW fdFile;
 				HANDLE hFind;
 

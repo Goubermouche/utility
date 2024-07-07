@@ -49,7 +49,10 @@ namespace utility {
 	template <typename type, typename other = type>
 	constexpr auto exchange(type& value, other&& new_value) noexcept -> type {
 		type old = static_cast<type&&>(value);
+#pragma warning(push)
+#pragma warning(disable: 4244)
 		value = static_cast<other&&>(new_value);
+#pragma warning(pop)
 		return old;
 	}
 

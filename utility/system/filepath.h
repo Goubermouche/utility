@@ -18,7 +18,12 @@ namespace utility {
 
 			if(last_slash_pos != base_type::invalid_pos) {
 				const size_type start_pos = last_slash_pos + 1;
-				const size_type length = (last_dot_pos != base_type::invalid_pos && last_dot_pos > last_slash_pos) ? last_dot_pos - start_pos : base_type::invalid_pos;
+				size_type length = base_type::invalid_pos;
+
+				if(last_dot_pos != base_type::invalid_pos && last_dot_pos > last_slash_pos) {
+					length = last_dot_pos - start_pos;
+				}
+
 				return { m_data.substring(start_pos, length) };
 			}
 

@@ -346,7 +346,7 @@ namespace utility {
 			return result;
 		}
 	public:
-		static constexpr size_type invalid_pos = size_type::max();
+		static constexpr size_type invalid_pos = limits<size_type>::max();
 	protected:
 		element_type* m_data = nullptr;
 		size_type m_capacity = size_type();

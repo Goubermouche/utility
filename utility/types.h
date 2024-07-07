@@ -28,211 +28,21 @@ namespace utility {
 		template<typename type>
 		concept is_floating_point = std::derived_from<type, floating_point>;
 
-		// declare basic types
-#define DECLARE_INTEGRAL_TYPE(name, underlying, min_v, max_v)                      \
-    struct name : integral {                                                       \
-      constexpr name() = default;                                                  \
-      constexpr name(underlying v) : value(v) {}                                   \
-      constexpr name(const name& b) = default;                                     \
-      constexpr name(name&& b) noexcept : value(exchange(b.value, 0)) {}           \
-                                                                                   \
-      template<is_integral type>                                                   \
-      explicit constexpr name(type v) : value(static_cast<underlying>(v.value)) {} \
-                                                                                   \
-      ~name() = default;                                                           \
-                                                                                   \
-      static constexpr auto max() -> name {                                        \
-        return max_v;                                                              \
-      }                                                                            \
-                                                                                   \
-      static constexpr auto min() -> name {                                        \
-        return min_v;                                                              \
-      }                                                                            \
-                                                                                   \
-      constexpr auto operator=(const name& b) -> name& {                           \
-        if(this != &b) {                                                           \
-          value = b.value;                                                         \
-        }                                                                          \
-        return *this;                                                              \
-      }                                                                            \
-      constexpr auto operator=(name&& b) noexcept -> name& {                       \
-        if(this != &b) {                                                           \
-          value = exchange(b.value, 0);                                            \
-        }                                                                          \
-        return *this;                                                              \
-      }                                                                            \
-                                                                                   \
-      constexpr auto operator+=(underlying x) -> name& {                           \
-        value += x;                                                                \
-        return *this;                                                              \
-      }                                                                            \
-      constexpr auto operator-=(underlying x) -> name& {                           \
-        value -= x;                                                                \
-        return *this;                                                              \
-      }                                                                            \
-      constexpr auto operator*=(underlying x) -> name& {                           \
-        value *= x;                                                                \
-        return *this;                                                              \
-      }                                                                            \
-      constexpr auto operator%=(underlying x) -> name& {                           \
-        value %= x;                                                                \
-        return *this;                                                              \
-      }                                                                            \
-      constexpr auto operator&=(underlying x) -> name& {                           \
-        value &= x;                                                                \
-        return *this;                                                              \
-      }                                                                            \
-      constexpr auto operator|=(underlying x) -> name& {                           \
-        value |= x;                                                                \
-        return *this;                                                              \
-      }                                                                            \
-      constexpr auto operator^=(underlying x) -> name& {                           \
-        value ^= x;                                                                \
-        return *this;                                                              \
-      }                                                                            \
-      constexpr auto operator<<=(underlying x) -> name& {                          \
-        value <<= x;                                                               \
-        return *this;                                                              \
-      }                                                                            \
-      constexpr auto operator>>=(underlying x) -> name& {                          \
-        value >>= x;                                                               \
-        return *this;                                                              \
-      }                                                                            \
-      constexpr auto operator/=(underlying x) -> name& {                           \
-        value /= x;                                                                \
-        return *this;                                                              \
-      }                                                                            \
-                                                                                   \
-      constexpr auto operator++() -> name& {                                       \
-        ++value;                                                                   \
-        return *this;                                                              \
-      }                                                                            \
-      constexpr auto operator++(int) -> name {                                     \
-        name tmp(*this);                                                           \
-        ++(*this);                                                                 \
-        return tmp;                                                                \
-      }                                                                            \
-      constexpr auto operator--() -> name& {                                       \
-        --value;                                                                   \
-        return *this;                                                              \
-      }                                                                            \
-      constexpr auto operator--(int) -> name {                                     \
-        name tmp(*this);                                                           \
-        --(*this);                                                                 \
-        return tmp;                                                                \
-      }                                                                            \
-      constexpr auto operator~() const -> name {                                   \
-        return name(~value);                                                       \
-      }                                                                            \
-                                                                                   \
-      constexpr operator underlying() const {                                      \
-        return value;                                                              \
-      }                                                                            \
-                                                                                   \
-      underlying value;                                                            \
-    };
-
-#define DECLARE_FLOATING_POINT_TYPE(name, underlying, min_v, max_v, eps_v)         \
-    struct name {                                                                  \
-      constexpr name() = default;                                                  \
-      constexpr name(underlying v) : value(v) {}                                   \
-      constexpr name(const name& b) = default;                                     \
-      constexpr name(name&& b) noexcept : value(exchange(b.value, 0)) {}           \
-                                                                                   \
-      template<is_floating_point type>                                             \
-      explicit constexpr name(type v) : value(static_cast<underlying>(v.value)) {} \
-                                                                                   \
-      ~name() = default;                                                           \
-                                                                                   \
-      static constexpr auto max() -> name {                                        \
-        return max_v                  ;                                            \
-      }                                                                            \
-                                                                                   \
-      static constexpr auto min() -> name {                                        \
-        return min_v;                                                              \
-      }                                                                            \
-                                                                                   \
-      static constexpr auto lowest() -> name {                                     \
-        return -(max_v);                                                           \
-      }                                                                            \
-                                                                                   \
-      static constexpr auto eps() -> name {                                        \
-        return eps_v;                                                              \
-      }                                                                            \
-                                                                                   \
-      constexpr auto operator=(const name& b) -> name& {                           \
-        if(this != &b) {                                                           \
-          value = b.value;                                                         \
-        }                                                                          \
-        return *this;                                                              \
-      }                                                                            \
-      constexpr auto operator=(name&& b) noexcept -> name& {                       \
-        if(this != &b) {                                                           \
-          value = exchange(b.value, 0);                                            \
-        }                                                                          \
-        return *this;                                                              \
-      }                                                                            \
-                                                                                   \
-      constexpr auto operator+=(underlying x) -> name& {                           \
-        value += x;                                                                \
-        return *this;                                                              \
-      }                                                                            \
-      constexpr auto operator-=(underlying x) -> name& {                           \
-        value -= x;                                                                \
-        return *this;                                                              \
-      }                                                                            \
-      constexpr auto operator*=(underlying x) -> name& {                           \
-        value *= x;                                                                \
-        return *this;                                                              \
-      }                                                                            \
-      constexpr auto operator/=(underlying x) -> name& {                           \
-        value /= x;                                                                \
-        return *this;                                                              \
-      }                                                                            \
-                                                                                   \
-      constexpr auto operator++() -> name& {                                       \
-        ++value;                                                                   \
-        return *this;                                                              \
-      }                                                                            \
-      constexpr auto operator++(int) -> name {                                     \
-        name tmp(*this);                                                           \
-        ++(*this);                                                                 \
-        return tmp;                                                                \
-      }                                                                            \
-      constexpr auto operator--() -> name& {                                       \
-        --value;                                                                   \
-        return *this;                                                              \
-      }                                                                            \
-      constexpr auto operator--(int) -> name {                                     \
-        name tmp(*this);                                                           \
-        --(*this);                                                                 \
-        return tmp;                                                                \
-      }                                                                            \
-                                                                                   \
-      constexpr operator underlying() const {                                      \
-        return value;                                                              \
-      }                                                                            \
-                                                                                   \
-    private:                                                                       \
-      underlying value;                                                            \
-    };
-
 		// unsigned integers
-		DECLARE_INTEGRAL_TYPE(u8 , uint8_t , 0, 255                   )
-		DECLARE_INTEGRAL_TYPE(u16, uint16_t, 0, 65535                 )
-		DECLARE_INTEGRAL_TYPE(u32, uint32_t, 0, 4294967295            )
-		DECLARE_INTEGRAL_TYPE(u64, uint64_t, 0, 0xffffffffffffffffui64)
+		using u8  = uint8_t;  //, 0, 255                   )
+		using u16 = uint16_t; //, 0, 65535                 )
+		using u32 = uint32_t; //, 0, 4294967295            )
+		using u64 = uint64_t; //, 0, 0xffffffffffffffffui64)
 
 		// signed integers
-		DECLARE_INTEGRAL_TYPE(i8 , int8_t , -128                       , 127                   )
-		DECLARE_INTEGRAL_TYPE(i16, int16_t, -32768                     , 32767                 )
-		DECLARE_INTEGRAL_TYPE(i32, int32_t, -2147483648                , 2147483647            )
-		DECLARE_INTEGRAL_TYPE(i64, int64_t, -9223372036854775807i64 - 1, 9223372036854775807i64)
+		using i8 = int8_t;   // , -128, 127                   )
+		using i16 = int16_t; //, -32768                     , 32767                 )
+		using i32 = int32_t; //, -2147483648                , 2147483647            )
+		using i64 = int64_t; //, -9223372036854775807i64 - 1, 9223372036854775807i64)
 
 		// floating point
-		DECLARE_FLOATING_POINT_TYPE(f32, float , 1.175494351e-38F       , 3.402823466e+38F       , 1.192092896e-07F       )
-		DECLARE_FLOATING_POINT_TYPE(f64, double, 2.2250738585072014e-308, 1.7976931348623158e+308, 2.2204460492503131e-016)
-
+		using f32 = float; //, float , 1.175494351e-38F       , 3.402823466e+38F       , 1.192092896e-07F       )
+		using f64 = double; // , double, 2.2250738585072014e-308, 1.7976931348623158e+308, 2.2204460492503131e-016)
 #undef DECLARE_INTEGRAL_TYPE
 #undef DECLARE_FLOATING_POINT_TYPE
 	} // namespace types
@@ -281,6 +91,98 @@ namespace utility {
 	auto max(a left, b right) {
 		return left > right ? left : right;
 	}
+
+
+	template<typename type>
+	struct limits {};
+
+	template<>
+	struct limits<u8> {
+		[[nodiscard]] static constexpr auto max() noexcept -> u8 {
+			return 255;
+		}
+
+		[[nodiscard]] static constexpr auto min() noexcept -> u8 {
+			return 0;
+		}
+	};
+
+	template<>
+	struct limits<u16> {
+		[[nodiscard]] static constexpr auto max() noexcept -> u16 {
+			return 65535;
+		}
+
+		[[nodiscard]] static constexpr auto min() noexcept -> u16 {
+			return 0;
+		}
+	};
+
+	template<>
+	struct limits<u32> {
+		[[nodiscard]] static constexpr auto max() noexcept -> u32 {
+			return 4294967295;
+		}
+
+		[[nodiscard]] static constexpr auto min() noexcept -> u32 {
+			return 0;
+		}
+	};
+
+	template<>
+	struct limits<u64> {
+		[[nodiscard]] static constexpr auto max() noexcept -> u64 {
+			return 18446744073709551615ull;
+		}
+
+		[[nodiscard]] static constexpr auto min() noexcept -> u64 {
+			return 0;
+		}
+	};
+
+	template<>
+	struct limits<i8> {
+		[[nodiscard]] static constexpr auto max() noexcept -> i8 {
+			return 127;
+		}
+
+		[[nodiscard]] static constexpr auto min() noexcept -> i8 {
+			return -128;
+		}
+	};
+
+	template<>
+	struct limits<i16> {
+		[[nodiscard]] static constexpr auto max() noexcept -> i16 {
+			return 32767;
+		}
+
+		[[nodiscard]] static constexpr auto min() noexcept -> i16 {
+			return -32768;
+		}
+	};
+
+	template<>
+	struct limits<i32> {
+		[[nodiscard]] static constexpr auto max() noexcept -> i32 {
+			return 2147483647;
+		}
+
+		[[nodiscard]] static constexpr auto min() noexcept -> i32 {
+			return -2147483648;
+		}
+	};
+
+	template<>
+	struct limits<i64> {
+		[[nodiscard]] static constexpr auto max() noexcept -> i64 {
+			return 9223372036854775807;
+		}
+
+		[[nodiscard]] static constexpr auto min() noexcept -> i64 {
+			return -9223372036854775808ll;
+		}
+	};
 } // namespace utility
 
 #define EXPAND(__x) __x

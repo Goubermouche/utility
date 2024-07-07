@@ -70,13 +70,63 @@ namespace utility {
 		right = std::move(temp);
 	}
 
-	inline auto sign_extend(u64 x, u8 x_bits, u8 n) -> u64 {
-		if((x >> (x_bits - 1)) & 1) {
-			x |= ((std::numeric_limits<u64>::max()) << x_bits) >> n;
-		}
-
-		return x;
+	template <typename type, typename other = type>
+	constexpr auto exchange(type& value, other&& new_value) noexcept -> type {
+		type old = static_cast<type&&>(value);
+		value = static_cast<other&&>(new_value);
+		return old;
 	}
+
+	template <class type>
+		struct remove_reference {
+		using element_type = type;
+		using _Const_thru_ref_type = const type;
+	};
+
+	template <class type>
+	struct remove_reference<type&> {
+		using element_type = type;
+		using _Const_thru_ref_type = const type&;
+	};
+
+	template <class type>
+	struct remove_reference<type&&> {
+		using element_type = type;
+		using _Const_thru_ref_type = const type&&;
+	};
+
+	template <class type>
+	using remove_reference_t = typename remove_reference<type>::element_type;
+
+	template <class>
+	constexpr bool is_lvalue_reference = false; 
+
+	template <class _Ty>
+	constexpr bool is_lvalue_reference<_Ty&> = true;
+
+	template<typename type>
+	constexpr auto forward(remove_reference_t<type>& arg) noexcept -> type&& {
+		return static_cast<type&&>(arg);
+	}
+
+	template<typename type>
+	constexpr auto forward(remove_reference_t<type>&& arg) noexcept -> type&& {
+		static_assert(!is_lvalue_reference<type>, "bad forward call");
+		return static_cast<type&&>(arg);
+	}
+
+	template<typename type, typename... types>
+	constexpr auto construct_at(type* const location, types&&... args) noexcept(
+		noexcept(::new(static_cast<void*>(location)) type(forward<types>(args)...))
+	) -> type* {
+		return ::new(static_cast<void*>(location)) type(forward<types>(args)...);
+	}
+
+	template<typename type>
+	constexpr auto move(type&& value) noexcept -> remove_reference_t<type>&& {
+		return static_cast<remove_reference_t<type>&&>(value);
+	}
+
 
 	template<std::three_way_comparable type>
 	struct range {
@@ -143,6 +193,119 @@ namespace utility {
 	private:
 		u8 m_value;
 	};
+
+	inline auto is_space(char c) noexcept -> bool {
+		return (c == '\t' || c == '\n' || c == '\v' || c == '\f' || c == '\r' || c == ' ');
+	}
+
+	template<typename type>
+	struct limits {};
+
+	template<>
+	struct limits<u8> {
+		[[nodiscard]] static constexpr auto max() noexcept -> u8 {
+			return 255;
+		}
+
+		[[nodiscard]] static constexpr auto min() noexcept -> u8 {
+			return 0;
+		}
+	};
+
+	template<>
+	struct limits<u16> {
+		[[nodiscard]] static constexpr auto max() noexcept -> u16 {
+			return 65535;
+		}
+
+		[[nodiscard]] static constexpr auto min() noexcept -> u16 {
+			return 0;
+		}
+	};
+
+	template<>
+	struct limits<u32> {
+		[[nodiscard]] static constexpr auto max() noexcept -> u32 {
+			return 4294967295;
+		}
+
+		[[nodiscard]] static constexpr auto min() noexcept -> u32 {
+			return 0;
+		}
+	};
+
+	template<>
+	struct limits<u64> {
+		[[nodiscard]] static constexpr auto max() noexcept -> u64 {
+			return 18446744073709551615ull;
+		}
+
+		[[nodiscard]] static constexpr auto min() noexcept -> u64 {
+			return 0;
+		}
+	};
+
+	template<>
+	struct limits<i8> {
+		[[nodiscard]] static constexpr auto max() noexcept -> i8 {
+			return 127;
+		}
+
+		[[nodiscard]] static constexpr auto min() noexcept -> i8 {
+			return -128;
+		}
+	};
+
+	template<>
+	struct limits<i16> {
+		[[nodiscard]] static constexpr auto max() noexcept -> i16 {
+			return 32767;
+		}
+
+		[[nodiscard]] static constexpr auto min() noexcept -> i16 {
+			return -32768;
+		}
+	};
+
+	template<>
+	struct limits<i32> {
+		[[nodiscard]] static constexpr auto max() noexcept -> i32 {
+			return 2147483647;
+		}
+
+		[[nodiscard]] static constexpr auto min() noexcept -> i32 {
+			return -2147483648;
+		}
+	};
+
+	template<>
+	struct limits<i64> {
+		[[nodiscard]] static constexpr auto max() noexcept -> i64 {
+			return 9223372036854775807;
+		}
+
+		[[nodiscard]] static constexpr auto min() noexcept -> i64 {
+			return -9223372036854775808;
+		}
+	};
+
+	template<typename a, typename b = a>
+	auto min(a left, b right) {
+		return left > right ? right : left;
+	}
+
+	template<typename a, typename b = a>
+	auto max(a left, b right) {
+		return left > right ? left : right;
+	}
+
+	inline auto sign_extend(u64 x, u8 x_bits, u8 n) -> u64 {
+		if((x >> (x_bits - 1)) & 1) {
+			x |= ((limits<u64>::max()) << x_bits) >> n;
+		}
+
+		return x;
+	}
 } // namespace utility
 
 #define EXPAND(__x) __x

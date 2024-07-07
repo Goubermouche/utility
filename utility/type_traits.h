@@ -15,4 +15,7 @@ namespace utility {
 	struct iterator_traits {
 		using element_type = typename remove_pointer<type>::element_type;
 	};
+
+	template<typename type>
+	constexpr bool is_trivial = __is_trivially_constructible(type) && __is_trivially_copyable(type);
 } // namespace utility

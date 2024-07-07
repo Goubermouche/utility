@@ -1,6 +1,7 @@
 #pragma once
 #include "../ranges.h"
 #include "../assert.h"
+#include "../type_traits.h"
 
 namespace utility {
 	template <typename value, typename size = u64>
@@ -28,9 +29,9 @@ namespace utility {
 			m_size = other.get_size();
 		}
 		dynamic_array(dynamic_array&& other) noexcept {
-			m_data = std::exchange(other.m_data, nullptr);
-			m_capacity = std::exchange(other.m_capacity, 0);
-			m_size = std::exchange(other.m_size, 0);
+			m_data = exchange(other.m_data, nullptr);
+			m_capacity = exchange(other.m_capacity, 0);
+			m_size = exchange(other.m_size, 0);
 		}
 
 		~dynamic_array() {
@@ -43,11 +44,11 @@ namespace utility {
 				reserve(m_capacity > 0 ? m_capacity * 2 : 1);
 			}
 
-			if constexpr(std::is_trivial_v<element_type>) {
+			if constexpr(is_trivial<element_type>) {
 				m_data[m_size++] = val;
 			}
 			else {
-				std::construct_at(&m_data[m_size++], val);
+				construct_at(&m_data[m_size++], val);
 			}
 		}
 		auto pop_back() -> element_type {
@@ -57,11 +58,7 @@ namespace utility {
 
 			--m_size;
 
-			// if constexpr(!std::is_trivial_v<element_type>) {
-			// 	std::destroy_at(&m_data[m_size]);
-			// }
-
-			return std::move(m_data[m_size]);
+			return move(m_data[m_size]);
 		}
 
 		template<typename... Args>
@@ -70,7 +67,7 @@ namespace utility {
 				reserve(m_capacity > 0 ? m_capacity * 2 : 1);
 			}
 
-			m_data[m_size++] = element_type(std::forward<Args>(args)...);
+			m_data[m_size++] = element_type(forward<Args>(args)...);
 			return m_data[m_size - 1];
 		}
 
@@ -89,7 +86,7 @@ namespace utility {
 			}
 
 			// move existing elements to make space for the new elements
-			if constexpr(std::is_trivial_v<element_type>) {
+			if constexpr(is_trivial<element_type>) {
 				utility::memmove(
 					m_data + index + num_elements_to_insert,
 					m_data + index,
@@ -99,7 +96,7 @@ namespace utility {
 			else {
 				// move construct elements from end to start to prevent overwriting
 				for(size_type i = m_size; i > index; --i) {
-					new (m_data + i + num_elements_to_insert - 1) element_type(std::move(m_data[i - 1]));
+					new (m_data + i + num_elements_to_insert - 1) element_type(move(m_data[i - 1]));
 					m_data[i - 1].~element_type(); // destroy the old object after moving
 				}
 			}
@@ -122,7 +119,7 @@ namespace utility {
 			element_type* new_data = static_cast<element_type*>(utility::malloc(new_capacity * sizeof(element_type)));
 			ASSERT(new_data, "allocation failure");
 
-			if constexpr(std::is_trivial_v<element_type>) {
+			if constexpr(is_trivial<element_type>) {
 				utility::memcpy(new_data, m_data, m_size * sizeof(element_type));
 			}
 			else {
@@ -135,7 +132,7 @@ namespace utility {
 			m_capacity = new_capacity;
 		}
 		void clear() {
-			if constexpr(!std::is_trivial_v<element_type>) {
+			if constexpr(!is_trivial<element_type>) {
 				destruct_range(begin(), end());
 			}
 
@@ -169,9 +166,9 @@ namespace utility {
 			return *this;
 		}
 		auto operator=(dynamic_array&& other) noexcept -> dynamic_array& {
-			m_data = std::exchange(other.m_data, nullptr);
-			m_capacity = std::exchange(other.m_capacity, 0);
-			m_size = std::exchange(other.m_size, 0);
+			m_data = exchange(other.m_data, nullptr);
+			m_capacity = exchange(other.m_capacity, 0);
+			m_size = exchange(other.m_size, 0);
 			return *this;
 		}
 		[[nodiscard]] auto operator[](size_type index) -> element_type& {
@@ -184,7 +181,7 @@ namespace utility {
 		}
 	protected:
 		void construct(const_iterator begin, const_iterator end, size_type count) {
-			if constexpr(std::is_trivial_v<element_type>) {
+			if constexpr(is_trivial<element_type>) {
 				utility::memcpy(m_data, begin, count * sizeof(element_type));
 			}
 			else {

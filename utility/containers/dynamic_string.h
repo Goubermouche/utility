@@ -1,4 +1,5 @@
 #pragma once
+#include "../type_traits.h"
 #include "../stream.h"
 #include "../ranges.h"
 #include "../assert.h"
@@ -31,7 +32,7 @@ namespace utility {
 			utility::memcpy(m_data, other.get_data(), (m_size + 1) * sizeof(element_type));
 		}
 		dynamic_string_base(dynamic_string_base&& other) noexcept :
-		m_data(std::exchange(other.m_data, nullptr)), m_capacity(std::exchange(other.m_capacity, 0)), m_size(std::exchange(other.m_size, 0)) {}
+		m_data(exchange(other.m_data, nullptr)), m_capacity(exchange(other.m_capacity, 0)), m_size(exchange(other.m_size, 0)) {}
 
 		~dynamic_string_base() {
 			if(m_data) {
@@ -57,7 +58,7 @@ namespace utility {
 			}
 
 			// move existing elements to make space for the new elements
-			if constexpr(std::is_trivial_v<element_type>) {
+			if constexpr(is_trivial<element_type>) {
 				utility::memmove(
 					m_data + index + num_elements_to_insert,
 					m_data + index,
@@ -67,7 +68,7 @@ namespace utility {
 			else {
 				// move construct elements from end to start to prevent overwriting
 				for(size_type i = m_size; i > index; --i) {
-					new (m_data + i + num_elements_to_insert - 1) element_type(std::move(m_data[i - 1]));
+					new (m_data + i + num_elements_to_insert - 1) element_type(move(m_data[i - 1]));
 					m_data[i - 1].~value_type(); // destroy the old object after moving
 				}
 			}
@@ -92,7 +93,7 @@ namespace utility {
 			element_type* new_data = static_cast<element_type*>(utility::malloc(new_capacity * sizeof(element_type)));
 			ASSERT(new_data, "allocation failure");
 
-			if constexpr(std::is_trivial_v<element_type>) {
+			if constexpr(is_trivial<element_type>) {
 				utility::memcpy(new_data, m_data, m_size * sizeof(element_type));
 			}
 			else {
@@ -123,7 +124,7 @@ namespace utility {
 				reserve(new_size);
 			}
 
-			if constexpr(std::is_trivial_v<element_type>) {
+			if constexpr(is_trivial<element_type>) {
 				utility::memmove(
 					m_data + start + new_content.get_size(),
 					m_data + start + count,
@@ -132,7 +133,7 @@ namespace utility {
 			}
 			else {
 				for(size_type i = start + new_content.get_size(); i < m_size; ++i) {
-					new (m_data + i) element_type(std::move(m_data[i - count]));
+					new (m_data + i) element_type(move(m_data[i - count]));
 					m_data[i - count].~element_type(); // destroy the old object after moving
 				}
 			}
@@ -156,7 +157,7 @@ namespace utility {
 			size_type start_index;
 
 			// leading whitespace
-			while(std::isspace(m_data[index])) {
+			while(is_space(m_data[index])) {
 				++index;
 			}
 
@@ -170,13 +171,13 @@ namespace utility {
 			// trailing whitespace
 			index = m_size - 1;
 
-			while(index > start_index && std::isspace(m_data[index])) {
+			while(index > start_index && is_space(m_data[index])) {
 				--index;
 			}
 
 			const size_type length = index - start_index + 1;
 			result.resize(length);
-			std::memcpy(result.m_data, begin() + start_index, length * sizeof(element_type));
+			utility::memcpy(result.m_data, begin() + start_index, length * sizeof(element_type));
 
 			return result;
 		}
@@ -232,7 +233,7 @@ namespace utility {
 			new_string.reserve(length);
 			new_string.m_size = length;
 
-			std::memcpy(new_string.m_data, begin() + start, length * sizeof(element_type));
+			utility::memcpy(new_string.m_data, begin() + start, length * sizeof(element_type));
 			new_string.m_data[length] = 0;
 
 			return new_string;
@@ -319,9 +320,9 @@ namespace utility {
 			return *this;
 		}
 		auto operator=(dynamic_string_base&& other) noexcept -> dynamic_string_base& {
-			m_capacity = std::exchange(other.m_capacity, m_capacity);
-			m_size = std::exchange(other.m_size, m_size);
-			m_data = std::exchange(other.m_data, m_data);
+			m_capacity = exchange(other.m_capacity, m_capacity);
+			m_size = exchange(other.m_size, m_size);
+			m_data = exchange(other.m_data, m_data);
 
 			return *this;
 		}
@@ -346,7 +347,7 @@ namespace utility {
 			return result;
 		}
 	public:
-		static constexpr size_type invalid_pos = std::numeric_limits<size_type>::max();
+		static constexpr size_type invalid_pos = limits<size_type>::max();
 	protected:
 		element_type* m_data = nullptr;
 		size_type m_capacity = size_type();

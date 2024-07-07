@@ -41,13 +41,13 @@ namespace utility {
 		template<typename type, typename... types>
 		static void print(const char* format, const type& first, const types&... rest) {
 			m_current_handle = m_value.stdout_handle;
-			print_impl(format, first, std::forward<const types>(rest)...);
+			print_impl(format, first, forward<const types>(rest)...);
 		}
 
 		template<typename type, typename... types>
 		static void print_err(const char* format, const type& first, const types&... rest) {
 			m_current_handle = m_value.stderr_handle;
-			print_impl(format, first, std::forward<const types>(rest)...);
+			print_impl(format, first, forward<const types>(rest)...);
 		}
 
 		static void write(const char* data) {

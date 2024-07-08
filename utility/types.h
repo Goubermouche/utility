@@ -15,36 +15,24 @@
 #include <cmath>
 
 #include <initializer_list>
-#include <string>
 
 namespace utility {
 	namespace types {
-		struct integral {};
-		struct floating_point {};
-
-		template<typename type>
-		concept is_integral = std::derived_from<type, integral>;
-
-		template<typename type>
-		concept is_floating_point = std::derived_from<type, floating_point>;
-
 		// unsigned integers
-		using u8  = uint8_t;  //, 0, 255                   )
-		using u16 = uint16_t; //, 0, 65535                 )
-		using u32 = uint32_t; //, 0, 4294967295            )
-		using u64 = uint64_t; //, 0, 0xffffffffffffffffui64)
+		using u8  = uint8_t;
+		using u16 = uint16_t;
+		using u32 = uint32_t;
+		using u64 = uint64_t;
 
 		// signed integers
-		using i8 = int8_t;   // , -128, 127                   )
-		using i16 = int16_t; //, -32768                     , 32767                 )
-		using i32 = int32_t; //, -2147483648                , 2147483647            )
-		using i64 = int64_t; //, -9223372036854775807i64 - 1, 9223372036854775807i64)
+		using i8 = int8_t;
+		using i16 = int16_t;
+		using i32 = int32_t;
+		using i64 = int64_t;
 
 		// floating point
-		using f32 = float; //, float , 1.175494351e-38F       , 3.402823466e+38F       , 1.192092896e-07F       )
-		using f64 = double; // , double, 2.2250738585072014e-308, 1.7976931348623158e+308, 2.2204460492503131e-016)
-#undef DECLARE_INTEGRAL_TYPE
-#undef DECLARE_FLOATING_POINT_TYPE
+		using f32 = float;
+		using f64 = double;
 	} // namespace types
 
 	using namespace types;
@@ -57,7 +45,7 @@ namespace utility {
 	inline void free(void* data) {
 		std::free(data);
 	}
-	inline auto malloc(u64 size) -> void* {
+	[[nodiscard]] inline auto malloc(u64 size) -> void* {
 		return std::malloc(size);
 	}
 	inline void memcpy(void* destination, const void* source, u64 size) {
@@ -72,26 +60,25 @@ namespace utility {
 
 	// strings
 
-	inline auto string_len(const char* str) -> u64 {
+	[[nodiscard]] inline auto string_len(const char* str) -> u64 {
 		return std::strlen(str);
 	}
-	inline auto string_len(const wchar_t* str) -> u64 {
+	[[nodiscard]] inline auto string_len(const wchar_t* str) -> u64 {
 		return std::wcslen(str);
 	}
-	inline auto is_space(char c) noexcept -> bool {
+	[[nodiscard]] inline auto is_space(char c) noexcept -> bool {
 		return (c == '\t' || c == '\n' || c == '\v' || c == '\f' || c == '\r' || c == ' ');
 	}
 
 	template<typename a, typename b = a>
-	auto min(a left, b right) {
+	[[nodiscard]] auto min(a left, b right) {
 		return left > right ? right : left;
 	}
 
 	template<typename a, typename b = a>
-	auto max(a left, b right) {
+	[[nodiscard]] auto max(a left, b right) {
 		return left > right ? left : right;
 	}
-
 
 	template<typename type>
 	struct limits {};
@@ -180,7 +167,7 @@ namespace utility {
 		}
 
 		[[nodiscard]] static constexpr auto min() noexcept -> i64 {
-			return -9223372036854775808ll;
+			return -9223372036854775808i64;
 		}
 	};
 } // namespace utility

@@ -14,17 +14,17 @@ namespace utility {
 
 		while(left != middle && right != last) {
 			if(comp(*right, *left)) {
-				buffer.push_back(std::move(*right++));
+				buffer.push_back(move(*right++));
 			}
 			else {
-				buffer.push_back(std::move(*left++));
+				buffer.push_back(move(*left++));
 			}
 		}
 
 		buffer.insert(buffer.end(), left, middle);
 		buffer.insert(buffer.end(), right, last);
 
-		std::move(buffer.begin(), buffer.end(), first);
+		move(buffer.begin(), buffer.end(), first);
 	}
 
 	template<typename iterator, typename compare>

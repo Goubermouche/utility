@@ -14,7 +14,7 @@ namespace utility {
 	template <typename iterator_type>
 	void destruct_range(iterator_type begin, iterator_type end) {
 		while(begin != end) {
-			std::destroy_at(begin);
+			destroy_at(begin);
 			++begin;
 		}
 	}

@@ -3,7 +3,7 @@
 #include "../assert.h"
 
 namespace utility {
-	template <typename value, typename size = u64>
+	template<typename value, typename size = u64>
 	class dynamic_array {
 	public:
 		using element_type = value;

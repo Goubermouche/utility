@@ -70,13 +70,27 @@ namespace utility {
 	template<typename type, typename... types>
 	constexpr auto construct_at(type* const location, types&&... args) noexcept(
 		noexcept(::new(static_cast<void*>(location)) type(forward<types>(args)...))
-		) -> type* {
+	) -> type* {
 		return ::new(static_cast<void*>(location)) type(forward<types>(args)...);
+	}
+
+	template<typename type>
+	void destroy_at(type* const location) noexcept {
+		location->~type();
 	}
 
 	template<typename type>
 	constexpr auto move(type&& value) noexcept -> remove_reference_t<type>&& {
 		return static_cast<remove_reference_t<type>&&>(value);
+	}
+
+	template<typename input, typename output>
+	void move(input first, input last, output result) {
+		while(first != last) {
+			*result = move(*first);
+			++first;
+			++result;
+		}
 	}
 
 	template<typename type>

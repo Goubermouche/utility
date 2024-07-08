@@ -39,8 +39,8 @@ This is my personal, opinionated library, which I use as a base for most of my t
     }
     ```
   - Generic containers should use the public variant of every generic type, as opposed to the name specified in the template parameter list.
-  -  Every container should expose the type of the available iterators, if applicable:    
-    ```
+  - Every container should expose the type of the available iterators, if applicable:    
+    ```cpp
     template<typename value, template size>
     class example {
     public:

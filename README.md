@@ -19,3 +19,36 @@ This is my personal, opinionated library, which I use as a base for most of my t
   - Console/file interfaces
 - [**Custom type names**]
   - This library attempts to provide alternatives to the C/C++ type names, which can be seen [here](./utility/types.h). The custom type names can be used in the global namespace by using the `using namespace utility::types` directive. 
+
+## Style guide
+- Namespaces
+  - Everything should be placed in a named namespace, with a trailing comment specifying the name of the closed namespace:
+    ```cpp
+    namespace test {
+    } // namespace test
+    ```
+  - Namespaces containing the implementation of a behavior which isn't used elsewhere shall use the `detail` namespace, which is reserved for this sole purpose. 
+- Generic containers
+  - Generic containers should expose the underlying types using the `using` keyword, in the public scope of the relevant container: 
+    ```cpp
+    template<typename value, template size>
+    class example {
+    public:
+      using element_type = value;
+      using size_type = size;
+    }
+    ```
+  - Generic containers should use the public variant of every generic type, as opposed to the name specified in the template parameter list.
+  -  Every container should expose the type of the available iterators, if applicable:    
+    ```
+    template<typename value, template size>
+    class example {
+    public:
+      using element_type = value;
+      using size_type = size;
+
+      using const_iterator = const element_type*;
+      using iterator = element_type*;
+    }
+    ```
+

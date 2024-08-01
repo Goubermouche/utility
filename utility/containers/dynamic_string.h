@@ -247,7 +247,7 @@ namespace utility {
 		}
 		[[nodiscard]] auto get_last() const -> element_type {
 			if(is_empty()) {
-				return EOF;
+				return g_eof;
 			}
 
 			return m_data[m_size - 1];

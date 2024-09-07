@@ -8,13 +8,16 @@
 
 #include "./type_traits.h"
 
+#include <stdio.h>
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
 #include <cwchar>
 #include <cmath>
+#include <time.h>  
 
 #include <initializer_list>
+#include <functional>
 
 namespace utility {
 	namespace types {
@@ -67,8 +70,31 @@ namespace utility {
 	[[nodiscard]] inline auto string_len(const wchar_t* str) -> u64 {
 		return std::wcslen(str);
 	}
+	[[nodiscard]] inline auto is_alpha(char c) noexcept -> bool {
+		return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z');
+	}
+	[[nodiscard]] inline auto is_digit(char c) noexcept -> bool {
+		return c >= '0' && c <= '9';
+	}
+	[[nodiscard]] inline auto is_alphanum(char c) noexcept -> bool {
+		return is_alpha(c) || is_digit(c);
+	}
+	[[nodiscard]] inline auto is_digit_hex(char c) noexcept -> bool {
+		return (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F');
+	}
+	[[nodiscard]] inline auto is_digit_bin(char c) noexcept -> bool {
+		return c == '0' || c == '1';
+	}
 	[[nodiscard]] inline auto is_space(char c) noexcept -> bool {
 		return (c == '\t' || c == '\n' || c == '\v' || c == '\f' || c == '\r' || c == ' ');
+	}
+	[[nodiscard]] inline auto compare_strings(const char* s1, const char* s2) -> i32 {
+		while(*s1 && (*s1 == *s2)) {
+			s1++;
+			s2++;
+		}
+
+		return *(const unsigned char*)s1 - *(const unsigned char*)s2;
 	}
 
 	template<typename a, typename b = a>
@@ -79,6 +105,12 @@ namespace utility {
 	template<typename a, typename b = a>
 	[[nodiscard]] auto max(a left, b right) {
 		return left > right ? left : right;
+	}
+
+	template<typename type, typename min_t, typename max_t>
+	[[nodiscard]] auto clamp(type value, min_t  min, max_t max) {
+		  const type t = value < min ? min : value;
+			return value > max ? max : t;
 	}
 
 	template<typename type>
@@ -171,6 +203,23 @@ namespace utility {
 		  return - __LONG_LONG_MAX__ - 1;
       // return -9223372036854775808i64;
 		}
+	};
+
+	struct timer {
+		void start() {
+			m_start = clock();
+		}
+
+		void stop() {
+			m_end = clock();
+		}
+
+		auto get_elapsed_sec() -> f32 {
+		  return static_cast<f32>(m_end - m_start) / CLOCKS_PER_SEC;	
+		}
+	private: 
+		clock_t m_start;
+		clock_t m_end;
 	};
 } // namespace utility
 

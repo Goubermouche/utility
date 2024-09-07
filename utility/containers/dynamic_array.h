@@ -57,7 +57,7 @@ namespace utility {
 
 			--m_size;
 
-			return move(m_data[m_size]);
+			return utility::move(m_data[m_size]);
 		}
 
 		template<typename... Args>
@@ -66,7 +66,10 @@ namespace utility {
 				reserve(m_capacity > 0 ? m_capacity * 2 : 1);
 			}
 
-			m_data[m_size++] = element_type(forward<Args>(args)...);
+			new(m_data + m_size) element_type(utility::forward<Args>(args)...);
+			m_size++;
+			// std::memset(m_data + m_size, 0, sizeof(element_type));
+			// m_data[m_size++] = element_type(utility::forward<Args>(args)...);
 			return m_data[m_size - 1];
 		}
 
@@ -95,7 +98,7 @@ namespace utility {
 			else {
 				// move construct elements from end to start to prevent overwriting
 				for(size_type i = m_size; i > index; --i) {
-					new (m_data + i + num_elements_to_insert - 1) element_type(move(m_data[i - 1]));
+					new (m_data + i + num_elements_to_insert - 1) element_type(utility::move(m_data[i - 1]));
 					m_data[i - 1].~element_type(); // destroy the old object after moving
 				}
 			}

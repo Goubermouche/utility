@@ -4,6 +4,7 @@
 
 namespace utility {
 	struct directory {
+#ifdef SYSTEM_WINDOWS
 		static auto collect_files(const filepath& root_path) -> dynamic_array<filepath> {
 			if(!root_path.is_directory()) {
 				return {}; // root_path is not a directory
@@ -80,10 +81,11 @@ namespace utility {
 			if(!RemoveDirectory(string_to_string_w(path.get_string()).get_data())) {
 				ASSERT(false, "failed to delete directory '{}'", path);
 			}
-		}
+		}	
+#endif
 	};
-
 	struct file {
+#ifdef SYSTEM_WINDOWS
 		static auto exists(const filepath& path) -> bool {
 			const DWORD attr = GetFileAttributesA(path.get_data());
 
@@ -93,35 +95,48 @@ namespace utility {
 
 			return false;
 		}
-
+#endif
 		static auto read(const filepath& path) -> dynamic_string {
-			FILE* file;
-			dynamic_string result;
+			FILE* file = fopen(path.get_data(), "rb");
+    	dynamic_string result;
 
-			if(fopen_s(&file, path.get_data(), "r")) {
-				ASSERT(false, "failed to open file '{}'", path);
-			}
+    	ASSERT(file, "failed to open file '{}'\n", path);
 
-			if(file == nullptr) {
-				ASSERT(false, "file '{}' doesn't exist", path);
-			}
-			
-			while(true) {
-				constexpr u64 chunk_size = 1024;
-				char buffer[chunk_size];
-				const u64 bytes_read = fread(buffer, 1, chunk_size, file);
+    	fseek(file, 0, SEEK_END);
+    	u32 file_size = ftell(file);
+    	fseek(file, 0, SEEK_SET);
 
-				if(bytes_read > 0) {
-					result.insert(result.end(), buffer, buffer + bytes_read);
-				}
-				else {
-					break;
-				}
-			}
+    	result.resize(file_size);
 
-			return result;
+			char* write_ptr = result.get_data();
+    	constexpr u64 chunk_size = 128'000;
+    	char buffer[chunk_size];
+
+    	while(true) {
+    	  u64 bytes_read = fread(buffer, 1, chunk_size, file);
+
+    	  if(bytes_read > 0) {
+					memcpy(write_ptr, buffer, bytes_read);
+					write_ptr += bytes_read;
+    	  }
+
+    	  if (bytes_read < chunk_size) {
+    	    if(feof(file)) {
+    	      break;
+    	    }
+
+    	    if(ferror(file)) {
+    	      fclose(file);
+						ASSERT(false, "unhandled error while reading file '{}\n'", path);
+    	    }
+    	  }
+    	}
+
+    	fclose(file);
+
+    	return result;
 		}
-
+#ifdef WINDOWS_SYSTEM
 		static void write(const filepath& path, const dynamic_string& data) {
 			// ensure parent directory exists
 			directory::create_if_not_exists(path.get_parent_path());
@@ -129,11 +144,11 @@ namespace utility {
 			// open file for writing
 			FILE* file;
 			if(fopen_s(&file, path.get_data(), "w")) {
-				ASSERT(false, "failed to open file '{}'", path.get_data());
+				// ASSERT(false, "failed to open file '{}'", path.get_data());
 			}
 
 			if(file == nullptr) {
-				ASSERT(false, "failed to write to file '{}'", path);
+				// ASSERT(false, "failed to write to file '{}'", path);
 			}
 
 			// write data to file
@@ -141,7 +156,7 @@ namespace utility {
 				ASSERT(false, "failed to write to file '{}'", path);
 
 				if(fclose(file)) {
-					ASSERT(false, "failed to close file '{}'", path);
+					// ASSERT(false, "failed to close file '{}'", path);
 				}
 
 				return;
@@ -149,8 +164,9 @@ namespace utility {
 
 			// close file
 			if(fclose(file)) {
-				ASSERT(false, "failed to close file '{}'", path);
+				// ASSERT(false, "failed to close file '{}'", path);
 			}
 		}
+#endif
 	};
 } // utility

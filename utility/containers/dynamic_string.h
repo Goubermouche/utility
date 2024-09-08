@@ -247,7 +247,7 @@ namespace utility {
 		}
 		[[nodiscard]] auto get_last() const -> element_type {
 			if(is_empty()) {
-				return EOF;
+				return g_eof;
 			}
 
 			return m_data[m_size - 1];
@@ -275,12 +275,26 @@ namespace utility {
 
 			return true;
 		}
+		[[nodiscard]] auto operator==(const dynamic_string_base& other) const -> bool {
+			if(other.get_size() != m_size) {
+				return false;
+			}
+
+			for(size_type i = 0; i < m_size; ++i) {
+				if(other[i] != m_data[i]) {
+					return false;
+				}
+			}
+
+			return true;
+		}
 		[[nodiscard]] auto operator[](size_type index) -> element_type& {
-			ASSERT(index < m_size, "index out of range");
+			// utility::console::print("{}, {}\n", index, m_size);
+			ASSERT(index < m_size, "index out of range\n");
 			return m_data[index];
 		}
 		[[nodiscard]] auto operator[](size_type index) const -> const element_type& {
-			ASSERT(index < m_size, "index out of range");
+			ASSERT(index < m_size, "index out of range\n");
 			return m_data[index];
 		}
 
@@ -309,7 +323,7 @@ namespace utility {
 		}
 		auto operator=(const dynamic_string_base& other) -> dynamic_string_base& {
 			if(this != &other) {
-				this->~dynamic_string_base();
+				utility::free(m_data);
 
 				reserve(other.get_size());
 				m_size = other.get_size();
@@ -319,9 +333,13 @@ namespace utility {
 			return *this;
 		}
 		auto operator=(dynamic_string_base&& other) noexcept -> dynamic_string_base& {
-			m_capacity = exchange(other.m_capacity, m_capacity);
-			m_size = exchange(other.m_size, m_size);
-			m_data = exchange(other.m_data, m_data);
+			if(this != &other) {
+				utility::free(m_data);
+
+				m_capacity = exchange(other.m_capacity, 0);
+				m_size = exchange(other.m_size, 0);
+				m_data = exchange(other.m_data, nullptr);
+			}
 
 			return *this;
 		}
@@ -377,10 +395,7 @@ namespace utility {
 		dynamic_string result;
 		result.resize(str.get_size());
 
-#pragma warning(push)
-#pragma warning(disable : 4996)
 		const u64 written = wcstombs(result.get_data(), str.get_data(), str.get_size() + 1);
-#pragma warning(pop) 
 		ASSERT(written == str.get_size(), "invalid string");
 
 		return result;

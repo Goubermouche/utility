@@ -2,6 +2,7 @@
 
 #pragma once
 #include "dynamic_array.h"
+#include "dynamic_string.h"
 
 namespace utility {
 	namespace detail {
@@ -155,12 +156,12 @@ namespace utility {
 			}
 		};
 
-		// template<>
-		// struct hash<std::string> {
-		// 	auto operator()(const std::string& obj) const noexcept -> u64 {
-		// 		return compute_hash(obj.data(), sizeof(char) * obj.get_size());
-		// 	}
-		// };
+		template<typename d, typename s>
+		struct hash<dynamic_string_base<d, s>> {
+			auto operator()(const dynamic_string_base<d, s>& obj) const noexcept -> u64 {
+				return compute_hash(obj.get_data(), sizeof(char) * obj.get_size());
+			}
+		};
 	} // namespace detail
 
 	/**
@@ -275,7 +276,7 @@ namespace utility {
 
 		template<class... Args>
 		auto emplace(Args&&... args) -> std::pair<iterator, bool> {
-			auto& k = get_key(m_values.emplace_back(forward<Args>(args)...));
+			auto& k = get_key(m_values.emplace_back(utility::forward<Args>(args)...));
 			auto h = mixed_hash(k);
 			auto dist_and_fingerprint = dist_and_fingerprint_from_hash(h);
 			auto bucket_idx = bucket_idx_from_hash(h);
@@ -353,7 +354,7 @@ namespace utility {
 	protected:
 		template <class... Args>
 		auto try_emplace(const key_type& k, Args&&... args) -> std::pair<iterator, bool> {
-			return do_try_emplace(k, forward<Args>(args)...);
+			return do_try_emplace(k, utility::forward<Args>(args)...);
 		}	
 
 		auto do_at(const key_type& k) -> element_type& {
@@ -384,8 +385,8 @@ namespace utility {
 						dist_and_fingerprint,
 						bucket_idx,
 						std::piecewise_construct,
-						std::forward_as_tuple(forward<K>(k)),
-						std::forward_as_tuple(forward<Args>(args)...)
+						std::forward_as_tuple(utility::forward<K>(k)),
+						std::forward_as_tuple(utility::forward<Args>(args)...)
 					);
 				}
 
@@ -396,7 +397,7 @@ namespace utility {
 
 		template <typename... Args>
 		auto do_place_element(dist_and_fingerprint_type dist_and_fingerprint, value_idx_type bucket_idx, Args&&... args) -> std::pair<iterator, bool> {
-			m_values.emplace_back(forward<Args>(args)...);
+			m_values.emplace_back(utility::forward<Args>(args)...);
 			auto value_idx = static_cast<value_idx_type>(m_values.get_size() - 1);
 
 			if(is_full()) {

@@ -49,10 +49,7 @@ namespace utility {
 	template <typename type, typename other = type>
 	constexpr auto exchange(type& value, other&& new_value) noexcept -> type {
 		type old = static_cast<type&&>(value);
-#pragma warning(push)
-#pragma warning(disable: 4244)
 		value = static_cast<other&&>(new_value);
-#pragma warning(pop)
 		return old;
 	}
 
@@ -69,9 +66,9 @@ namespace utility {
 
 	template<typename type, typename... types>
 	constexpr auto construct_at(type* const location, types&&... args) noexcept(
-		noexcept(::new(static_cast<void*>(location)) type(forward<types>(args)...))
+		noexcept(::new(static_cast<void*>(location)) type(utility::forward<types>(args)...))
 	) -> type* {
-		return ::new(static_cast<void*>(location)) type(forward<types>(args)...);
+		return ::new(static_cast<void*>(location)) type(utility::forward<types>(args)...);
 	}
 
 	template<typename type>

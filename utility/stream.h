@@ -214,156 +214,19 @@ namespace utility {
 	template<typename stream_type>
 	struct stream_writer<f32, stream_type> {
 		static void write(f32 value) {
-			// handle negative values
-			if(value < 0) {
-				value = -value;
-			}
-
-			// extract the exponent
-			i32 exponent = 0;
-
-			if(value != 0.0f) {
-				exponent = static_cast<i32>(std::floor(std::log10(value)));
-
-				if(exponent < -3 || exponent > 3) {
-					value /= std::pow(10.0f, exponent);
-				}
-				else {
-					exponent = 0;
-				}
-			}
-
-			// convert the mantissa to a string
-			i32 int_part = static_cast<i32>(value);
-			f32 fraction = value - static_cast<f32>(int_part);
-			static char buffer[100];
-			u8 index = 0;
-
-			stream_writer<i32, stream_type>::write(int_part);
-
-			// fractional part
-			if(fraction > 0.0f) {
-				buffer[index++] = '.';
-
-				for(u8 i = 0; i < 4; i++) {
-					fraction *= 10;
-					const u8 digit = static_cast<u8>(fraction);
-					buffer[index++] = static_cast<char>(digit + 48);
-					fraction -= static_cast<f32>(digit);
-				}
-
-				// remove trailing zeros
-				while(index > 0 && buffer[index - 1] == '0') {
-					index--;
-				}
-
-				// ensure there's at least one digit after the decimal point
-				if(buffer[index - 1] == '.') {
-					index--;
-				}
-			}
-
-			// append the exponent, if necessary
-			if(exponent != 0) {
-				buffer[index++] = 'e';
-
-				if(exponent < 0) {
-					buffer[index++] = '-';
-					exponent = -exponent;
-				}
-				else {
-					buffer[index++] = '+';
-				}
-
-				if(exponent < 10) {
-					buffer[index++] = '0';
-				}
-
-				buffer[index] = '\0';
-				stream_type::write(buffer);
-				stream_writer<i32, stream_type>::write(exponent);
-			}
-			else {
-				buffer[index] = '\0';
-			}
+			char buffer[20];
+    	snprintf(buffer, sizeof(buffer), "%.2f", value);
+			stream_type::write(buffer);
 		}
 	};
 
 	template<typename stream_type>
 	struct stream_writer<f64, stream_type> {
 		static void write(f64 value) {
-			// handle negative values
-			if(value < 0) {
-				value = -value;
-			}
-
-			// extract the exponent
-			i32 exponent = 0;
-
-			if(value != 0.0) {
-				exponent = static_cast<i32>(std::floor(std::log10(value)));
-
-				if(exponent < -3 || exponent > 3) {
-					value /= std::pow(10.0, exponent);
-				}
-				else {
-					exponent = 0;
-				}
-			}
-
-			// convert the mantissa to a string
-			i32 int_part = static_cast<i32>(value);
-			f64 fraction = value - int_part;
-			static char buffer[100];
-			u8 index = 0;
-
-			stream_writer<i32, stream_type>::write(int_part);
-
-			// fractional part
-			if(fraction > 0.0) {
-				buffer[index++] = '.';
-
-				for(u8 i = 0; i < 4; i++) {
-					fraction *= 10;
-					const u8 digit = static_cast<u8>(fraction);
-					buffer[index++] = static_cast<char>(digit + 48);
-					fraction -= digit;
-				}
-
-				// remove trailing zeros
-				while(index > 0 && buffer[index - 1] == '0') {
-					index--;
-				}
-
-				// ensure there's at least one digit after the decimal point
-				if(buffer[index - 1] == '.') {
-					index--;
-				}
-			}
-
-			// append the exponent, if necessary
-			if(exponent != 0) {
-				buffer[index++] = 'e';
-
-				if(exponent < 0) {
-					buffer[index++] = '-';
-					exponent = -exponent;
-				}
-				else {
-					buffer[index++] = '+';
-				}
-
-				if(exponent < 10) {
-					buffer[index++] = '0';
-				}
-
-				buffer[index] = '\0';
-				stream_type::write(buffer);
-				stream_writer<i32, stream_type>::write(exponent);
-			}
-			else {
-				buffer[index] = '\0';
-			}
+			char buffer[30];
+    	snprintf(buffer, sizeof(buffer), "%.2f", value);
+			stream_type::write(buffer);
 		}
 	};
 } // namespace utility
+

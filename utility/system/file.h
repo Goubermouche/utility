@@ -96,6 +96,27 @@ namespace utility {
 			return false;
 		}
 #endif
+		static auto get_file_line_count(const filepath& path) -> u64 {
+			FILE *file = fopen(path.get_data(), "rb");
+    	ASSERT(file, "failed to open file '{}'\n", path);
+
+    	u64 line_count = 0;
+    	char ch;
+
+    	while((ch = fgetc(file)) != EOF) {
+    	  if(ch == '\n') {
+    	    ++line_count;
+    	  }
+    	}
+
+    	if(line_count == 0 && ch != EOF) {
+    	  ++line_count;
+    	}
+
+    	fclose(file);
+    	return line_count;
+		}
+
 		static auto read(const filepath& path) -> dynamic_string {
 			FILE* file = fopen(path.get_data(), "rb");
     	dynamic_string result;

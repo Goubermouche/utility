@@ -214,7 +214,7 @@ namespace utility {
 			m_end = clock();
 		}
 
-		auto get_elapsed_sec() -> f32 {
+		auto get_elapsed_s() -> f32 {
 		  return static_cast<f32>(m_end - m_start) / CLOCKS_PER_SEC;	
 		}
 	private: 

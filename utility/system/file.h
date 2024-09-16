@@ -83,6 +83,23 @@ namespace utility {
 			}
 		}	
 #endif
+		static auto read(const filepath& path) -> dynamic_array<filepath> {
+			dynamic_array<filepath> result;
+			DIR* dir = opendir(path.get_data());
+			struct dirent* entry;
+			
+    	ASSERT(dir, "failed to open directory '{}'\n", path);
+
+
+    	while((entry = readdir(dir)) != nullptr) {
+    	  if(compare_strings(entry->d_name, ".") != 0 && compare_strings(entry->d_name, "..") != 0) {
+    	    result.push_back(path / entry->d_name);
+    	  }
+    	}
+
+			closedir(dir);
+			return result;
+		}
 	};
 	struct file {
 #ifdef SYSTEM_WINDOWS

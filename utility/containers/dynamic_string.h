@@ -2,6 +2,7 @@
 #include "../stream.h"
 #include "../ranges.h"
 #include "../assert.h"
+#include "utility/types.h"
 
 namespace utility {
 	template<typename value, typename size>
@@ -386,7 +387,9 @@ namespace utility {
 		result.resize(str.get_size());
 
 		const i32 written = swprintf(result.get_data(), str.get_size() + 1, L"%hs", str.get_data());
+
 		ASSERT(written == static_cast<i32>(str.get_size()), "invalid string");
+		SUPPRESS_C4100(written);
 
 		return result;
 	}
@@ -396,7 +399,9 @@ namespace utility {
 		result.resize(str.get_size());
 
 		const u64 written = wcstombs(result.get_data(), str.get_data(), str.get_size() + 1);
+
 		ASSERT(written == str.get_size(), "invalid string");
+		SUPPRESS_C4100(written);
 
 		return result;
 	}

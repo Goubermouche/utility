@@ -1,8 +1,6 @@
 #pragma once
 #include "types.h"
 
-// TODO: f32's and f64's are currently broken
-
 namespace utility {
 	class stream {};
 

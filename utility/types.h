@@ -15,6 +15,7 @@
 #include <cwchar>
 #include <cmath>
 #include <time.h>  
+#include <dirent.h>
 
 #include <initializer_list>
 #include <functional>

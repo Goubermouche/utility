@@ -45,7 +45,6 @@ namespace utility {
 	using initializer_list = std::initializer_list<type>;
 
 	// memory
-
 	inline void free(void* data) {
 		std::free(data);
 	}
@@ -60,6 +59,9 @@ namespace utility {
 	}
 	inline void memmove(void* destination, const void* source, u64 size) {
 		std::memmove(destination, source, size);
+	}
+	[[nodiscard]] inline auto align(u64 value, u64 alignment) -> u64 {
+		return value + (alignment - (value % alignment)) % alignment;
 	}
 
 	// strings
@@ -87,7 +89,7 @@ namespace utility {
 		return c == '0' || c == '1';
 	}
 	[[nodiscard]] inline auto is_space(char c) noexcept -> bool {
-		return (c == '\t' || c == '\n' || c == '\v' || c == '\f' || c == '\r' || c == ' ');
+		return (c == '\t' || /*c == '\n' ||*/ c == '\v' || c == '\f' || c == '\r' || c == ' ');
 	}
 	[[nodiscard]] inline auto compare_strings(const char* s1, const char* s2) -> i32 {
 		while(*s1 && (*s1 == *s2)) {

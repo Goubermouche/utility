@@ -89,7 +89,7 @@ namespace utility {
 		return c == '0' || c == '1';
 	}
 	[[nodiscard]] inline auto is_space(char c) noexcept -> bool {
-		return (c == '\t' || /*c == '\n' ||*/ c == '\v' || c == '\f' || c == '\r' || c == ' ');
+		return (c == '\t' || c == '\n' || c == '\v' || c == '\f' || c == '\r' || c == ' ');
 	}
 	[[nodiscard]] inline auto compare_strings(const char* s1, const char* s2) -> i32 {
 		while(*s1 && (*s1 == *s2)) {

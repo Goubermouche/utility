@@ -3,6 +3,7 @@
 #pragma once
 #include "dynamic_array.h"
 #include "dynamic_string.h"
+#include "string_view.h"
 
 namespace utility {
 	namespace detail {
@@ -159,6 +160,13 @@ namespace utility {
 		template<typename d, typename s>
 		struct hash<dynamic_string_base<d, s>> {
 			auto operator()(const dynamic_string_base<d, s>& obj) const noexcept -> u64 {
+				return compute_hash(obj.get_data(), sizeof(char) * obj.get_size());
+			}
+		};
+
+		template<typename d, typename s>
+		struct hash<string_view_base<d, s>> {
+			auto operator()(const string_view_base<d, s>& obj) const noexcept -> u64 {
 				return compute_hash(obj.get_data(), sizeof(char) * obj.get_size());
 			}
 		};

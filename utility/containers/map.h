@@ -224,7 +224,7 @@ namespace utility {
 			copy_buckets(other);
 		}
 		map(map&& other) noexcept : m_buckets(nullptr) {
-			*this = move(other);
+			*this = utility::move(other);
 		}
 		~map() {
 			utility::free(m_buckets);
@@ -247,7 +247,7 @@ namespace utility {
 			if(&other != this) {
 				deallocate_buckets();
 
-				m_values = move(other.m_values);
+				m_values = utility::move(other.m_values);
 				other.m_values.clear();
 				m_buckets = exchange(other.m_buckets, nullptr);
 				m_num_buckets = exchange(other.m_num_buckets, 0);

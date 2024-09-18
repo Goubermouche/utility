@@ -33,8 +33,7 @@ namespace utility {
 		};
 
 		block_allocator(u64 block_size) : m_block_size(block_size) {
-			allocate_block(); // allocate the first block
-			m_first_block = m_current_block;
+			clear();
 		}
 
 		block_allocator(const block_allocator& other) = delete;
@@ -61,6 +60,22 @@ namespace utility {
 				temp->~block();
 				utility::free(temp);
 			}
+		}
+
+		void clear() {
+			while(m_first_block) {
+				block* temp = m_first_block;
+				m_first_block = m_first_block->next;
+
+				temp->~block();
+				utility::free(temp);
+			}
+
+			m_first_block = nullptr;
+			m_current_block = nullptr;
+
+			allocate_block(); // allocate the first block
+			m_first_block = m_current_block;
 		}
 
 		[[nodiscard]] auto allocate(u64 size) -> void* {

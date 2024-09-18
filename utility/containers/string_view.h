@@ -40,6 +40,12 @@ namespace utility {
 			return m_size;
 		}
 
+		void set_data(element_type* data) {
+			m_data = data;
+		}
+		void set_size(size_type count) {
+			m_size = count;
+		}
 		[[nodiscard]] auto operator[](size_type index) -> element_type& {
 			ASSERT(index < m_size, "index out of range\n");
 			return m_data[index];

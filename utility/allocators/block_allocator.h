@@ -56,9 +56,7 @@ namespace utility {
 			while(m_first_block) {
 				block* temp = m_first_block;
 				m_first_block = m_first_block->next;
-
-				temp->~block();
-				utility::free(temp);
+				delete temp;
 			}
 		}
 
@@ -66,9 +64,7 @@ namespace utility {
 			while(m_first_block) {
 				block* temp = m_first_block;
 				m_first_block = m_first_block->next;
-
-				temp->~block();
-				utility::free(temp);
+				delete temp;
 			}
 
 			m_first_block = nullptr;

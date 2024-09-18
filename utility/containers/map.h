@@ -271,7 +271,7 @@ namespace utility {
 		}
 
 		auto insert(bucket_type&& v) -> std::pair<iterator, bool> {
-			return emplace(move(v));
+			return emplace(utility::move(v));
 		}
 
 		[[nodiscard]] auto at(const key_type& k) -> value& {
@@ -358,6 +358,11 @@ namespace utility {
 		}
 		[[nodiscard]] auto empty() const noexcept -> bool {
 			return m_values.is_empty();
+		}
+
+		void clear() {
+      m_values.clear();
+      clear_buckets();
 		}
 	protected:
 		template <class... Args>

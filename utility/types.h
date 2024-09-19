@@ -85,6 +85,9 @@ namespace utility {
 	[[nodiscard]] inline auto is_digit_hex(char c) noexcept -> bool {
 		return (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F');
 	}
+	[[nodiscard]] inline auto is_digit_oct(char c) noexcept -> bool {
+		return (c >= '0' && c <= '7');
+	}
 	[[nodiscard]] inline auto is_digit_bin(char c) noexcept -> bool {
 		return c == '0' || c == '1';
 	}

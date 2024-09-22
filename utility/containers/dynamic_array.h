@@ -148,8 +148,12 @@ namespace utility {
 		[[nodiscard]] auto get_data() const -> element_type* {
 			return m_data;
 		}
+		[[nodiscard]] auto get_last() const -> const element_type& {
+			return m_data[m_size - 1];
+		}
 		[[nodiscard]] auto get_capacity() const -> size_type { return m_capacity; }
 		[[nodiscard]] auto get_size() const -> size_type { return m_size; }
+		void set_size(size_type s)  { m_size = s; }
 
 		[[nodiscard]] auto begin() -> iterator { return m_data; }
 		[[nodiscard]] auto end() -> iterator { return m_data + m_size; }

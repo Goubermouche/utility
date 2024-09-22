@@ -274,7 +274,7 @@ namespace utility {
 			return emplace(utility::move(v));
 		}
 
-		[[nodiscard]] auto at(const key_type& k) -> value& {
+		[[nodiscard]] auto at(const key_type& k) -> const value& {
 			return do_at(k);
 		}
 
@@ -370,13 +370,14 @@ namespace utility {
 			return do_try_emplace(k, utility::forward<Args>(args)...);
 		}	
 
-		auto do_at(const key_type& k) -> element_type& {
+		auto do_at(const key_type& k) -> const element_type& {
 			if(auto it = find(k); (end() != it)) {
 				return it->second;
 			}
 			 
-			ASSERT(false, "key not found");
-			return element_type{};
+		  static const element_type default_element{};
+  	  ASSERT(false, "key not found\n");
+  	  return default_element;
 		}
 
 		template <typename K, typename... Args>

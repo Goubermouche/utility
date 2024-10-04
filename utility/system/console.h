@@ -63,7 +63,8 @@ namespace utility {
 			DWORD bytes_written;
 			WriteConsoleA(m_current_handle, data, static_cast<DWORD>(size), &bytes_written, nullptr);
 #elif __linux__
-			::write(m_current_handle, data, size);
+			auto r = ::write(m_current_handle, data, size);
+			SUPPRESS_C4100(r);
 #endif
 		}
 
@@ -72,7 +73,8 @@ namespace utility {
 			DWORD bytes_written;
 			WriteConsoleW(m_current_handle, data, static_cast<DWORD>(size), &bytes_written, nullptr);
 #elif __linux__
-			::write(m_current_handle, data, size * sizeof(wchar_t));
+			auto r = ::write(m_current_handle, data, size * sizeof(wchar_t));
+			SUPPRESS_C4100(r);
 #endif
 		}
 

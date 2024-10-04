@@ -26,6 +26,12 @@ namespace utility {
 			utility::memcpy(m_data, str, m_size * sizeof(element_type));
 			m_data[m_size] = 0;
 		}
+		dynamic_string_base(element_type c) {
+			reserve(1);
+			m_size = 1;
+			m_data[0] = c;
+			m_data[m_size] = 0;
+		}
 		dynamic_string_base(const dynamic_string_base& other) {
 			reserve(other.get_size());
 			m_size = other.get_size();

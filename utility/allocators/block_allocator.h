@@ -2,6 +2,7 @@
 #include "allocator_base.h"
 
 namespace utility {
+	// TODO: aligned allocations
 	class block_allocator : public allocator_base {
 	protected:
 		struct block {

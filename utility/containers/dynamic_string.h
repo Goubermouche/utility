@@ -3,6 +3,7 @@
 #include "../ranges.h"
 #include "../assert.h"
 #include "utility/types.h"
+#include "./string_view.h"
 
 namespace utility {
 	template<typename value, typename size>
@@ -97,7 +98,7 @@ namespace utility {
 			}
 
 			element_type* new_data = static_cast<element_type*>(utility::malloc(new_capacity * sizeof(element_type)));
-			ASSERT(new_data, "allocation failure");
+			ASSERT(new_data, "allocation failure\n");
 
 			if constexpr(is_trivial_v<element_type>) {
 				utility::memcpy(new_data, m_data, m_size * sizeof(element_type));
@@ -356,6 +357,13 @@ namespace utility {
 
 			return *this;
 		}
+		auto operator+=(const string_view& other) -> dynamic_string_base& {
+			reserve(m_size + other.get_size());
+			utility::memcpy(m_data + m_size, other.begin(), sizeof(element_type) * (other.get_size() + 1));
+			m_size += other.get_size();
+
+			return *this;
+		}
 		auto operator=(const dynamic_string_base& other) -> dynamic_string_base& {
 			if(this != &other) {
 				utility::free(m_data);
@@ -415,6 +423,12 @@ namespace utility {
 
 	using dynamic_string = dynamic_string_base<char, u64>;
 	using dynamic_string_w = dynamic_string_base<wchar_t, u64>;
+
+	inline auto int_to_string(u64 value) -> dynamic_string {
+		char buffer[30];
+    snprintf(buffer, sizeof(buffer), "%lu", value);
+		return dynamic_string(buffer);
+	}
 
 	inline auto string_to_string_w(const dynamic_string& str) -> dynamic_string_w {
 		dynamic_string_w result;

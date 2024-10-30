@@ -20,6 +20,16 @@ namespace utility {
 
 			m_size = i_list.size();
 		}
+		dynamic_array(size_type s, const element_type& v) 
+			: m_data(nullptr), m_capacity(0), m_size(0) {
+			reserve(s);
+
+			for(size_type i = 0; i < s; ++i) {
+				m_data[i] = v;
+			}
+
+			m_size = s;
+		}
 		dynamic_array(const dynamic_array& other)
 			: m_data(nullptr), m_capacity(0), m_size(0) {
 			reserve(other.get_size());

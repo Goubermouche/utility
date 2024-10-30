@@ -76,7 +76,7 @@ namespace utility {
 		}
 
 		[[nodiscard]] auto allocate(u64 size) -> void* {
-			ASSERT(size <= m_block_size, "insufficient block size for allocation of {}B", size);
+			ASSERT(size <= m_block_size, "insufficient block size for allocation of {}B\n", size);
 
 			if(size == 0) {
 				return nullptr;
@@ -125,7 +125,7 @@ namespace utility {
 			}
 
 			const auto memory = static_cast<u8*>(utility::malloc(m_block_size));
-			ASSERT(memory, "allocation failure");
+			ASSERT(memory, "allocation failure\n");
 
 			const auto new_block = new block(memory);
 

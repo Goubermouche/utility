@@ -1,6 +1,7 @@
 #pragma once
 #include "../containers/dynamic_array.h"
 #include "filepath.h"
+#include <cstdio>
 
 namespace utility {
 	struct directory {
@@ -132,6 +133,14 @@ namespace utility {
 
     	fclose(file);
     	return line_count;
+		}
+
+		static void write(const filepath& path, const dynamic_string& str) {
+			FILE *file = fopen(path.get_data(), "w");
+    	ASSERT(file, "failed to open file '{}'\n", path);
+			fprintf(file, "%s", str.get_data());
+
+    	fclose(file);
 		}
 
 		static auto read(const filepath& path) -> dynamic_string {

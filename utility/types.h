@@ -16,6 +16,7 @@
 #include <cmath>
 #include <time.h>  
 #include <dirent.h>
+#include <errno.h>
 
 #include <initializer_list>
 #include <functional>

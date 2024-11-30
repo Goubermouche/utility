@@ -50,6 +50,16 @@ namespace utility {
 			}
 		}
 
+		template<typename type>
+		void append(const type& first) {
+			append_impl(first);
+		}
+
+		template<typename type, typename... types>
+		void append(const char* format, const type& first, const types&... rest) {
+			append_impl(format, first, forward<const types>(rest)...);
+		}
+
 		template<typename iterator_type>
 		void insert(iterator pos, iterator_type first, iterator_type last) {
 			if(first == last) {
@@ -290,7 +300,6 @@ namespace utility {
 		}
 		[[nodiscard]] auto get_capacity() const -> size_type { return m_capacity; }
 		[[nodiscard]] auto get_size() const -> size_type { return m_size; }
-
 		[[nodiscard]] auto begin() -> iterator { return m_data; }
 		[[nodiscard]] auto end() -> iterator { return m_data + m_size; }
 		[[nodiscard]] auto begin() const -> const_iterator { return m_data; }
@@ -406,6 +415,31 @@ namespace utility {
 
 			return result;
 		}
+
+		void write(const char* data) {
+			write(data, string_len(data));
+		}
+		
+		void write(const char* data, u64 s) {
+			insert(end(), data, data + s);
+		}
+	protected:
+		template<typename type, typename... types>
+		void append_impl(const char* format, const type& first, const types&... rest) {
+			if(const char* open_brace = std::strstr(format, "{}")) {
+				write(format, open_brace - format);
+				stream_writer<type, dynamic_string_base<value, size>>::write(first, *this);
+				append_impl(open_brace + 2, rest...);
+			}
+			else {
+				write(format);
+			}
+		}
+
+		template<typename type>
+		void append_impl(const type& first) {
+			stream_writer<type, dynamic_string_base<value, size>>::write(first, *this);
+		}
 	public:
 		static constexpr size_type invalid_pos = limits<size_type>::max();
 	protected:
@@ -416,19 +450,13 @@ namespace utility {
 
 	template<typename stream_type, typename char_type, typename size_type>
 	struct stream_writer<dynamic_string_base<char_type, size_type>, stream_type> {
-		static void write(const dynamic_string_base<char_type, size_type>& value) {
-			stream_type::write(value.get_data(), value.get_size());
+		static void write(const dynamic_string_base<char_type, size_type>& value, stream_type& str) {
+			str.write(value.get_data(), value.get_size());
 		}
 	};
 
 	using dynamic_string = dynamic_string_base<char, u64>;
 	using dynamic_string_w = dynamic_string_base<wchar_t, u64>;
-
-	inline auto int_to_string(u64 value) -> dynamic_string {
-		char buffer[30];
-    snprintf(buffer, sizeof(buffer), "%lu", value);
-		return dynamic_string(buffer);
-	}
 
 	inline auto string_to_string_w(const dynamic_string& str) -> dynamic_string_w {
 		dynamic_string_w result;

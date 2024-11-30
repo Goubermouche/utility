@@ -105,9 +105,9 @@ namespace utility {
 
 	template<typename stream_type>
 	struct stream_writer<filepath, stream_type> {
-		static void write(const filepath& value) {
-			const auto& str = value.get_string();
-			stream_type::write(str.get_data(), str.get_size());
+		static void write(const filepath& value, stream_type& str) {
+			const auto& string = value.get_string();
+			str.write(string.get_data(), string.get_size());
 		}
 	};
 } // namespace utility

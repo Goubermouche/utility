@@ -71,8 +71,8 @@ namespace utility {
 
 	template<typename stream_type>
 	struct stream_writer<error, stream_type> {
-		static void write(const error& value) {
-			stream_type::write(value.get_message());
+		static void write(const error& value, stream_type& str) {
+			str.write(value.get_message());
 		}
 	};
 } // namespace utility

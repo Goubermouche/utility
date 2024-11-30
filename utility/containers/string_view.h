@@ -89,8 +89,8 @@ namespace utility {
 
 	template<typename stream_type, typename char_type, typename size_type>
 	struct stream_writer<string_view_base<char_type, size_type>, stream_type> {
-		static void write(const string_view_base<char_type, size_type>& value) {
-			stream_type::write(value.get_data(), value.get_size());
+		static void write(const string_view_base<char_type, size_type>& value, stream_type& str) {
+			str.write(value.get_data(), value.get_size());
 		}
 	};
 

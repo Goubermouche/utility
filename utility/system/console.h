@@ -2,20 +2,60 @@
 #include "../stream.h"
 
 namespace utility {
-	class console : public stream {
+	class console {
 	private:
-		friend class constructor;
-
-		struct constructor {
-			constructor() {
+		struct printer {
+			printer() {
 				#ifdef _WIN32
 				stdout_handle = GetStdHandle(STD_OUTPUT_HANDLE);
 				stderr_handle = GetStdHandle(STD_ERROR_HANDLE);
 				#elif __linux__
 				stdout_handle = STDOUT_FILENO;
-				stdout_handle = STDERR_FILENO;
+				stderr_handle = STDERR_FILENO;
 				#endif
 			}
+
+			void write(const char* data) {
+				write(data, string_len(data));
+			}
+	
+			void write(const wchar_t* data) {
+				write(data, string_len(data));
+			}
+	
+			void write(const char* data, u64 size) {
+				#ifdef _WIN32
+				DWORD bytes_written;
+				WriteConsoleA(m_current_handle, data, static_cast<DWORD>(size), &bytes_written, nullptr);
+				#elif __linux__
+				auto r = ::write(m_printer.m_current_handle, data, size);
+				SUPPRESS_C4100(r);
+				#endif
+			}
+	
+			void write(const wchar_t* data, u64 size) {
+				#ifdef _WIN32
+				DWORD bytes_written;
+				WriteConsoleW(m_current_handle, data, static_cast<DWORD>(size), &bytes_written, nullptr);
+				#elif __linux__
+				auto r = ::write(m_printer.m_current_handle, data, size * sizeof(wchar_t));
+				SUPPRESS_C4100(r);
+				#endif
+			}
+	
+			void flush() {
+				#ifdef _WIN32
+				FlushFileBuffers(m_current_handle);
+				#elif __linux__
+				fsync(m_printer.m_current_handle);
+				#endif
+			}
+
+			#ifdef _WIN32
+			HANDLE m_current_handle;
+			#elif __linux__
+			i32 m_current_handle;
+			#endif
 
 			#ifdef _WIN32
 			HANDLE stdout_handle;
@@ -26,96 +66,53 @@ namespace utility {
 			#endif
 		};
 	public:
+		void flush() {
+			m_printer.flush();
+		}
+
 		template<typename type>
 		static void print(const type& value) {
-			m_current_handle = m_value.stdout_handle;
+			m_printer.m_current_handle = m_printer.stdout_handle;
 			print_impl(value);
 		}
 
 		template<typename type>
 		static void print_err(const type& value) {
-			m_current_handle = m_value.stderr_handle;
+			m_printer.m_current_handle = m_printer.stderr_handle;
 			print_impl(value);
 		}
 
 		template<typename type, typename... types>
 		static void print(const char* format, const type& first, const types&... rest) {
-			m_current_handle = m_value.stdout_handle;
+			m_printer.m_current_handle = m_printer.stdout_handle;
 			print_impl(format, first, forward<const types>(rest)...);
 		}
 
 		template<typename type, typename... types>
 		static void print_err(const char* format, const type& first, const types&... rest) {
-			m_current_handle = m_value.stderr_handle;
+			m_printer.m_current_handle = m_printer.stderr_handle;
 			print_impl(format, first, forward<const types>(rest)...);
-		}
-
-		static void write(const char* data) {
-			write(data, string_len(data));
-		}
-
-		static void write(const wchar_t* data) {
-			write(data, string_len(data));
-		}
-
-		static void write(const char* data, u64 size) {
-#ifdef _WIN32
-			DWORD bytes_written;
-			WriteConsoleA(m_current_handle, data, static_cast<DWORD>(size), &bytes_written, nullptr);
-#elif __linux__
-			auto r = ::write(m_current_handle, data, size);
-			SUPPRESS_C4100(r);
-#endif
-		}
-
-		static void write(const wchar_t* data, u64 size) {
-#ifdef _WIN32
-			DWORD bytes_written;
-			WriteConsoleW(m_current_handle, data, static_cast<DWORD>(size), &bytes_written, nullptr);
-#elif __linux__
-			auto r = ::write(m_current_handle, data, size * sizeof(wchar_t));
-			SUPPRESS_C4100(r);
-#endif
-		}
-
-		static void flush() {
-			#ifdef _WIN32
-			FlushFileBuffers(m_current_handle);
-			#elif __linux__
-			fsync(m_current_handle);
-			#endif
 		}
 	protected:
 		template<typename type, typename... types>
 		static void print_impl(const char* format, const type& first, const types&... rest) {
 			if(const char* open_brace = std::strstr(format, "{}")) {
-				write(format, open_brace - format);
-				stream_writer<type, console>::write(first);
+				m_printer.write(format, open_brace - format);
+				stream_writer<type, printer>::write(first, m_printer);
 				print_impl(open_brace + 2, rest...);
 			}
 			else {
-				write(format);
+				m_printer.write(format);
 			}
 		}
 
 		template<typename type>
 		static void print_impl(const type& value) {
-			stream_writer<type, console>::write(value);
+				stream_writer<type, printer>::write(value, m_printer);
 		}
 	protected:
-		#ifdef _WIN32
-		static HANDLE m_current_handle;
-		#elif __linux__
-		static i32 m_current_handle;
-		#endif
-
-		static constructor m_value; // static constructor
+		static printer m_printer;
 	};
 
-	#ifdef _WIN32
-	inline HANDLE console::m_current_handle;
-	#elif __linux__
-	inline i32 console::m_current_handle;
-	#endif
-	inline console::constructor console::m_value;
+	inline console::printer console::m_printer;
 } // namespace utility

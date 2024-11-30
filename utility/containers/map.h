@@ -202,6 +202,7 @@ namespace utility {
 		using key_type = key;
 
 		map() : map(0) {}
+
 		map(u64 bucket_count) : m_buckets(nullptr), m_num_buckets(0), m_max_bucket_capacity(0) {
 			if(bucket_count != 0) {
 				reserve(bucket_count);
@@ -223,9 +224,11 @@ namespace utility {
 		: m_values(other.m_values), m_equal(other.m_equal), m_hash(other.m_hash) {
 			copy_buckets(other);
 		}
+
 		map(map&& other) noexcept : m_buckets(nullptr) {
 			*this = utility::move(other);
 		}
+
 		~map() {
 			utility::free(m_buckets);
 		}
@@ -238,11 +241,13 @@ namespace utility {
 				m_hash = other.m_hash;
 				m_equal = other.m_equal;
 				m_shifts = initial_shifts;
+
 				copy_buckets(other);
 			}
 
 			return *this;
 		}
+
 		auto operator=(map&& other) noexcept -> map& {
 			if(&other != this) {
 				deallocate_buckets();
@@ -266,9 +271,14 @@ namespace utility {
 		auto operator[](const key_type& k) -> element_type& {
 			return try_emplace(k).first->second;
 		}
+
 		auto operator[](key_type&& k) -> element_type& {
 			return try_emplace(move(k)).first->second;
 		}
+
+		auto contains(const key_type& k) const -> bool {
+			return find(k) != end();
+    }
 
 		auto insert(bucket_type&& v) -> std::pair<iterator, bool> {
 			return emplace(utility::move(v));
@@ -320,7 +330,7 @@ namespace utility {
 		void reserve(u64 capacity) {
 			capacity = min(capacity, max_size());
 			m_values.reserve(capacity);
-			const auto shifts = calc_shifts_for_size(max(capacity, size()));
+			const auto shifts = calc_shifts_for_size(max(capacity, get_size()));
 
 			if(0 == m_num_buckets || shifts < m_shifts) {
 				m_shifts = shifts;
@@ -334,29 +344,34 @@ namespace utility {
 		[[nodiscard]] auto begin() noexcept -> iterator {
 			return m_values.begin();
 		}
+
 		[[nodiscard]] auto begin() const noexcept -> const_iterator {
 			return m_values.begin();
 		}
+
 		[[nodiscard]] auto cbegin() const noexcept -> const_iterator {
 			return m_values.cbegin();
 		}
+
 		[[nodiscard]] auto end() noexcept -> iterator {
 			return m_values.end();
 		}
+
 		[[nodiscard]] auto cend() const noexcept -> const_iterator {
 			return m_values.cend();
 		}
+
 		[[nodiscard]] auto end() const noexcept -> const_iterator {
 			return m_values.end();
 		}
 
-		[[nodiscard]] auto size() const noexcept -> u64 {
+		[[nodiscard]] auto get_size() const noexcept -> u64 {
 			return m_values.get_size();
 		}
 		[[nodiscard]] auto is_full() const -> bool {
-			return size() > m_max_bucket_capacity;
+			return get_size() > m_max_bucket_capacity;
 		}
-		[[nodiscard]] auto empty() const noexcept -> bool {
+		[[nodiscard]] auto is_empty() const noexcept -> bool {
 			return m_values.is_empty();
 		}
 
@@ -425,7 +440,7 @@ namespace utility {
 		}
 
 		auto do_find(const key& k) const -> const_iterator {
-			if(empty()) {
+			if(is_empty()) {
 				return end();
 			}
 
@@ -602,7 +617,7 @@ namespace utility {
 		}
 
 		void copy_buckets(const map& other) {
-			if(empty()) {
+			if(is_empty()) {
 				allocate_buckets_from_shift();
 				clear_buckets();
 			}

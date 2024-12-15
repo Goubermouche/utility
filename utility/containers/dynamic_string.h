@@ -2,7 +2,6 @@
 #include "../stream.h"
 #include "../ranges.h"
 #include "../assert.h"
-#include "utility/types.h"
 #include "./string_view.h"
 
 namespace utility {

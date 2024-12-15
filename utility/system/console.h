@@ -66,7 +66,7 @@ namespace utility {
 			#endif
 		};
 	public:
-		void flush() {
+		static void flush() {
 			m_printer.flush();
 		}
 

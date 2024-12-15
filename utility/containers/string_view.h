@@ -1,6 +1,5 @@
 #pragma once
 #include "../stream.h"
-#include "utility/types.h"
 
 namespace utility {
 	template<typename value, typename size>

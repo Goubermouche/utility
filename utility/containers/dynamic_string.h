@@ -1,4 +1,5 @@
 #pragma once
+#include "../types.h"
 #include "../stream.h"
 #include "../ranges.h"
 #include "../assert.h"

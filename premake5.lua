@@ -1,5 +1,5 @@
 project "utility"
-    kind "StaticLib" -- or "SharedLib" if it's a dynamic library
+    kind "StaticLib"
     language "C++"
     targetdir "output/bin/utility"
     objdir "output/obj/utility"

@@ -11,11 +11,11 @@ namespace utility {
 			// since the allocation in a block allocator is effectively an increment we can afford to 
 			// temporarily allocate a block
 			auto safepoint = m_allocator.create_safepoint();
-	
+
 			char* memory = static_cast<char*>(m_allocator.allocate(string.get_size() + 1));
 			memcpy(memory, string.get_data(), string.get_size() + 1);
-	
-		  string_view* view = m_allocator.emplace<string_view>(memory, string.get_size());
+
+			string_view* view = m_allocator.emplace<string_view>(memory, string.get_size());
 			auto result = m_strings.insert({ *view, view });
 	
 			if(result.second == false) {

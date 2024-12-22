@@ -87,11 +87,11 @@ namespace utility {
   } while(false)
 
 // variant 2
-#define TRY_2(__success, __result)                        \
-auto CONCATENATE(result, __LINE__) = (__result);          \
-if(CONCATENATE(result, __LINE__).has_error()) {           \
-		return ((CONCATENATE(result, __LINE__)).get_error()); \
-}                                                         \
+#define TRY_2(__success, __result)                      \
+auto CONCATENATE(result, __LINE__) = (__result);        \
+if(CONCATENATE(result, __LINE__).has_error()) {         \
+  return ((CONCATENATE(result, __LINE__)).get_error()); \
+}                                                       \
 __success = CONCATENATE(result, __LINE__).get_value()
 
 // expand the macros based on the number of parameters

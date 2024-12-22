@@ -89,14 +89,14 @@ namespace utility {
 			DIR* dir = opendir(path.get_data());
 			struct dirent* entry;
 			
-    	ASSERT(dir, "failed to open directory '{}'\n", path);
+			ASSERT(dir, "failed to open directory '{}'\n", path);
 
 
-    	while((entry = readdir(dir)) != nullptr) {
-    	  if(compare_strings(entry->d_name, ".") != 0 && compare_strings(entry->d_name, "..") != 0) {
-    	    result.push_back(path / entry->d_name);
-    	  }
-    	}
+			while((entry = readdir(dir)) != nullptr) {
+				if(compare_strings(entry->d_name, ".") != 0 && compare_strings(entry->d_name, "..") != 0) {
+					result.push_back(path / entry->d_name);
+				}
+			}
 
 			closedir(dir);
 			return result;
@@ -116,72 +116,72 @@ namespace utility {
 #endif
 		static auto get_file_line_count(const filepath& path) -> u64 {
 			FILE *file = fopen(path.get_data(), "rb");
-    	ASSERT(file, "failed to open file '{}'\n", path);
+			ASSERT(file, "failed to open file '{}'\n", path);
 
-    	u64 line_count = 0;
-    	char ch;
+			u64 line_count = 0;
+			char ch;
 
-    	while((ch = fgetc(file)) != EOF) {
-    	  if(ch == '\n') {
-    	    ++line_count;
-    	  }
-    	}
+			while((ch = fgetc(file)) != EOF) {
+				if(ch == '\n') {
+					++line_count;
+				}
+			}
 
-    	if(line_count == 0 && ch != EOF) {
-    	  ++line_count;
-    	}
+			if(line_count == 0 && ch != EOF) {
+				++line_count;
+			}
 
-    	fclose(file);
-    	return line_count;
+			fclose(file);
+
+			return line_count;
 		}
 
 		static void write(const filepath& path, const dynamic_string& str) {
 			FILE *file = fopen(path.get_data(), "w");
-    	ASSERT(file, "failed to open file '{}'\n", path);
+			ASSERT(file, "failed to open file '{}'\n", path);
 			fprintf(file, "%s", str.get_data());
-
-    	fclose(file);
+			fclose(file);
 		}
 
 		static auto read(const filepath& path) -> dynamic_string {
 			FILE* file = fopen(path.get_data(), "rb");
-    	dynamic_string result;
+			dynamic_string result;
 
-    	ASSERT(file, "failed to open file '{}'\n", path);
+			ASSERT(file, "failed to open file '{}'\n", path);
 
-    	fseek(file, 0, SEEK_END);
-    	u32 file_size = ftell(file);
-    	fseek(file, 0, SEEK_SET);
+			fseek(file, 0, SEEK_END);
+			u32 file_size = ftell(file);
+			fseek(file, 0, SEEK_SET);
 
-    	result.resize(file_size);
+			result.resize(file_size);
 
 			char* write_ptr = result.get_data();
-    	constexpr u64 chunk_size = 128'000;
-    	char buffer[chunk_size];
+			constexpr u64 chunk_size = 128'000;
+			char buffer[chunk_size];
 
-    	while(true) {
-    	  u64 bytes_read = fread(buffer, 1, chunk_size, file);
+			while(true) {
+				u64 bytes_read = fread(buffer, 1, chunk_size, file);
 
-    	  if(bytes_read > 0) {
+				if(bytes_read > 0) {
 					memcpy(write_ptr, buffer, bytes_read);
 					write_ptr += bytes_read;
-    	  }
+				}
 
-    	  if (bytes_read < chunk_size) {
-    	    if(feof(file)) {
-    	      break;
-    	    }
+				if(bytes_read < chunk_size) {
+					if(feof(file)) {
+						break;
+					}
 
-    	    if(ferror(file)) {
-    	      fclose(file);
+					if(ferror(file)) {
+						fclose(file);
 						ASSERT(false, "unhandled error while reading file '{}\n'", path);
-    	    }
-    	  }
-    	}
+					}
+				}
+			}
 
-    	fclose(file);
+			fclose(file);
 
-    	return result;
+			return result;
 		}
 #ifdef WINDOWS_SYSTEM
 		static void write(const filepath& path, const dynamic_string& data) {

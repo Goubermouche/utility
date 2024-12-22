@@ -278,7 +278,7 @@ namespace utility {
 
 		auto contains(const key_type& k) const -> bool {
 			return find(k) != end();
-    }
+		}
 
 		auto insert(bucket_type&& v) -> std::pair<iterator, bool> {
 			return emplace(utility::move(v));
@@ -376,8 +376,8 @@ namespace utility {
 		}
 
 		void clear() {
-      m_values.clear();
-      clear_buckets();
+			m_values.clear();
+			clear_buckets();
 		}
 	protected:
 		template <class... Args>
@@ -390,9 +390,10 @@ namespace utility {
 				return it->second;
 			}
 			 
-		  static const element_type default_element{};
-  	  ASSERT(false, "key not found\n");
-  	  return default_element;
+			static const element_type default_element{};
+			ASSERT(false, "key not found\n");
+
+			return default_element;
 		}
 
 		template <typename K, typename... Args>

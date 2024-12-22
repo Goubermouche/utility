@@ -66,7 +66,7 @@ namespace utility {
 	}
 
 	// strings
-  static constexpr char g_eof = -1;
+	static constexpr char g_eof = -1;
 
 	[[nodiscard]] inline auto string_len(const char* str) -> u64 {
 		return std::strlen(str);
@@ -208,7 +208,6 @@ namespace utility {
 
 		[[nodiscard]] static constexpr auto min() noexcept -> i64 {
 		  return - __LONG_LONG_MAX__ - 1;
-      // return -9223372036854775808i64;
 		}
 	};
 

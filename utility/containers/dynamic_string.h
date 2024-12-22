@@ -225,31 +225,31 @@ namespace utility {
 		}
 		[[nodiscard]] auto find(const dynamic_string_base& substr, size_type start_index = 0) const -> size_type {
 			if(start_index >= get_size() || substr.get_size() == 0) {
-        return invalid_pos;
+				return invalid_pos;
 			}
 
 			size_type substr_len = substr.get_size();
 
-    	if(substr_len > get_size() - start_index) {
-    	  return invalid_pos; 
-    	}
+			if(substr_len > get_size() - start_index) {
+				return invalid_pos; 
+			}
 
-    	for(size_type i = start_index; i <= get_size() - substr_len; ++i) {
-    	  bool match = true;
+			for(size_type i = start_index; i <= get_size() - substr_len; ++i) {
+				bool match = true;
 
-    	  for(size_type j = 0; j < substr_len; ++j) {
-    	    if(m_data[i + j] != substr.m_data[j]) {
-    	      match = false;
-    	      break;
-    	    }
-    	  }
+				for(size_type j = 0; j < substr_len; ++j) {
+					if(m_data[i + j] != substr.m_data[j]) {
+						match = false;
+						break;
+					}
+				}
 
-    	  if(match) {
-    	    return i;
-    	  }
-    	}
+				if(match) {
+					return i;
+				}
+			}
 
-    	return invalid_pos;
+			return invalid_pos;
 		}
 		[[nodiscard]] auto find_last_of(element_type c, size_type start_index = 0) const -> size_type {
 			if(start_index >= get_size()) {

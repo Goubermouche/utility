@@ -64,7 +64,6 @@ namespace utility {
 	[[nodiscard]] inline auto align(u64 value, u64 alignment) -> u64 {
 		return value + (alignment - (value % alignment)) % alignment;
 	}
-
 	// strings
 	static constexpr char g_eof = -1;
 

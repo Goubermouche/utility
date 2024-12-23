@@ -481,4 +481,27 @@ namespace utility {
 
 		return result;
 	}
+
+	[[nodiscard]] inline auto byte_to_string(u8 byte) -> const char* {
+		constexpr char digits[] = "0123456789abcdef";
+		static char string[3];
+
+		string[0] = (digits[(byte >> 4) & 0x0F]);
+		string[1] = (digits[byte & 0x0F]);
+		string[2] = '\0';
+
+		return string;
+	}
+
+	template<typename byte_type>
+	[[nodiscard]] inline auto bytes_to_string(const byte_type& bytes, u8 count) -> dynamic_string {
+		dynamic_string string;
+		string.reserve(count * 2);
+
+		for(u64 i = 0; i < count; ++i) {
+			string += byte_to_string(bytes[i]);
+		}
+
+		return string;
+	}
 } // namespace utility

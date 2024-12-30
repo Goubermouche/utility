@@ -504,4 +504,17 @@ namespace utility {
 
 		return string;
 	}
+
+	template<typename byte_type>
+	[[nodiscard]] inline auto bytes_to_string(const byte_type& bytes, u8 count, char separator) -> dynamic_string {
+		dynamic_string string;
+		string.reserve(count * 3);
+
+		for(u64 i = 0; i < count; ++i) {
+			string += byte_to_string(bytes[i]);
+			string += separator;
+		}
+
+		return string;
+	}
 } // namespace utility

@@ -136,10 +136,12 @@ namespace utility {
 			return line_count;
 		}
 
-		static void write(const filepath& path, const dynamic_string& str) {
-			FILE *file = fopen(path.get_data(), "w");
+		template<typename type>
+		static void write(const filepath& path, const type& value) {
+			FILE *file = fopen(path.get_data(), "wb");
 			ASSERT(file, "failed to open file '{}'\n", path);
-			fprintf(file, "%s", str.get_data());
+			const size_t size = value.get_size();
+			fwrite(value.get_data(), sizeof(typename type::element_type), size, file);
 			fclose(file);
 		}
 

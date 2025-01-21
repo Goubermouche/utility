@@ -415,7 +415,21 @@ namespace utility {
 
 			return result;
 		}
+		friend auto operator<(const dynamic_string_base& left, const dynamic_string_base& right) -> bool {
+			size_type min_size = left.get_size() < right.get_size() ? left.get_size() : right.get_size();
 
+			for(size_t i = 0; i < min_size; ++i) {
+				if(left.get_data()[i] < right.get_data()[i]) {
+					return true;
+				}
+
+				if(left.get_data()[i] > right.get_data()[i]) {
+					return false;
+				}
+			}
+
+			return left.get_size() < right.get_size();
+		}
 		void write(const char* data) {
 			write(data, string_len(data));
 		}
@@ -494,7 +508,7 @@ namespace utility {
 	}
 
 	template<typename byte_type>
-	[[nodiscard]] inline auto bytes_to_string(const byte_type& bytes, u8 count) -> dynamic_string {
+	[[nodiscard]] inline auto bytes_to_string(const byte_type& bytes, u64 count) -> dynamic_string {
 		dynamic_string string;
 		string.reserve(count * 2);
 
@@ -506,7 +520,7 @@ namespace utility {
 	}
 
 	template<typename byte_type>
-	[[nodiscard]] inline auto bytes_to_string(const byte_type& bytes, u8 count, char separator) -> dynamic_string {
+	[[nodiscard]] inline auto bytes_to_string(const byte_type& bytes, u64 count, char separator) -> dynamic_string {
 		dynamic_string string;
 		string.reserve(count * 3);
 

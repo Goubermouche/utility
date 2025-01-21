@@ -99,6 +99,21 @@ namespace utility {
 			result.m_data += right.get_string();
 			return result;
 		}
+		friend auto operator<(const filepath& left, const filepath& right) -> bool {
+			size_type min_size = left.m_data.get_size() < right.m_data.get_size() ? left.m_data.get_size() : right.m_data.get_size();
+
+			for(size_t i = 0; i < min_size; ++i) {
+				if(left.m_data.get_data()[i] < right.m_data.get_data()[i]) {
+					return true;
+				}
+
+				if(left.m_data.get_data()[i] > right.m_data.get_data()[i]) {
+					return false;
+				}
+			}
+
+			return left.m_data.get_size() < right.m_data.get_size();
+		}
 	private:
 		base_type m_data;
 	};

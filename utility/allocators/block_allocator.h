@@ -71,12 +71,12 @@ namespace utility {
 			m_first_block = nullptr;
 			m_current_block = nullptr;
 
-			allocate_block(); // allocate the first block
+			allocate_block(m_block_size); // allocate the first block
 			m_first_block = m_current_block;
 		}
 
 		[[nodiscard]] auto allocate(u64 size) -> void* {
-			ASSERT(size <= m_block_size, "insufficient block size for allocation of {}B\n", size);
+			// ASSERT(size <= m_block_size, "insufficient block size for allocation of {}B\n", size);
 
 			if(size == 0) {
 				return nullptr;
@@ -84,7 +84,7 @@ namespace utility {
 
 			// if this allocation incurs a buffer overflow allocate a new block
 			if(m_current_block->position + size >= m_block_size) {
-				allocate_block();
+				allocate_block(max(m_block_size, size));
 			}
 
 			void* memory = m_current_block->memory + m_current_block->position;
@@ -116,7 +116,7 @@ namespace utility {
 			}
 		}
 	protected:
-		void allocate_block() {
+		void allocate_block(u64 size) {
 			// the current block already has a valid block after it, use that, this is a
 			// byproduct of safepoints
 			if(m_current_block && m_current_block->next) {
@@ -124,7 +124,7 @@ namespace utility {
 				return;
 			}
 
-			const auto memory = static_cast<u8*>(utility::malloc(m_block_size));
+			const auto memory = static_cast<u8*>(utility::malloc(size));
 			ASSERT(memory, "allocation failure\n");
 
 			const auto new_block = new block(memory);

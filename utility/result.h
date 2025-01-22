@@ -1,5 +1,5 @@
 #pragma once
-#include "stream.h"
+#include "utility/stream.h"
 
 namespace utility {
 	class error {

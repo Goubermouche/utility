@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../assert.h"
+#include "utility/assert.h"
 
 namespace utility {
 	template<typename value, u64 size>

@@ -6,8 +6,6 @@
 #include <unistd.h>
 #endif
 
-#include "./type_traits.h"
-
 #include <stdio.h>
 #include <cstdint>
 #include <cstdlib>
@@ -21,6 +19,8 @@
 #include <initializer_list>
 #include <functional>
 
+#include "utility/type_traits.h"
+
 namespace utility {
 	namespace types {
 		// unsigned integers
@@ -30,7 +30,7 @@ namespace utility {
 		using u64 = uint64_t;
 
 		// signed integers
-		using i8 = int8_t;
+		using i8  = int8_t;
 		using i16 = int16_t;
 		using i32 = int32_t;
 		using i64 = int64_t;

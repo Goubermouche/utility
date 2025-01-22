@@ -1,9 +1,6 @@
 #pragma once
-#include "../types.h"
-#include "../stream.h"
-#include "../ranges.h"
-#include "../assert.h"
-#include "./string_view.h"
+#include "utility/containers/string_view.h"
+#include "utility/ranges.h"
 
 namespace utility {
 	template<typename value, typename size>
@@ -466,6 +463,13 @@ namespace utility {
 	struct stream_writer<dynamic_string_base<char_type, size_type>, stream_type> {
 		static void write(const dynamic_string_base<char_type, size_type>& value, stream_type& str) {
 			str.write(value.get_data(), value.get_size());
+		}
+	};
+
+	template<typename d, typename s>
+	struct hash<dynamic_string_base<d, s>> {
+		auto operator()(const dynamic_string_base<d, s>& obj) const noexcept -> u64 {
+			return compute_hash(obj.get_data(), sizeof(char) * obj.get_size());
 		}
 	};
 

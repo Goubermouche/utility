@@ -1,5 +1,5 @@
 #pragma once
-#include "../containers/dynamic_string.h"
+#include "utility/containers/dynamic_string.h"
 
 namespace utility {
 	class filepath {

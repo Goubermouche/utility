@@ -1,6 +1,7 @@
 #pragma once
-#include "../allocators/block_allocator.h"
-#include "../containers/map.h"
+#include "utility/allocators/block_allocator.h"
+#include "utility/containers/dynamic_string.h"
+#include "utility/containers/map.h"
 
 namespace utility {
 	class string_interner {

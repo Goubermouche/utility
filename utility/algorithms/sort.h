@@ -1,6 +1,6 @@
 #pragma once
-#include "../containers/dynamic_array.h"
-#include "../type_traits.h"
+#include "utility/containers/dynamic_array.h"
+#include "utility/type_traits.h"
 
 namespace utility {
 	template<typename iterator, typename compare>

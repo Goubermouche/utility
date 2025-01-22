@@ -1,6 +1,6 @@
 #pragma once
 #include "system/console.h"
-#include "types.h"
+#include "utility/types.h"
 
 #ifdef DEBUG
 #define DEBUG_MODE

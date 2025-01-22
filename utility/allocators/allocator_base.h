@@ -1,5 +1,5 @@
 #pragma once
-#include "../assert.h"
+#include "utility/assert.h"
 
 namespace utility {
 	class allocator_base {};

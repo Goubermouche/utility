@@ -1,5 +1,5 @@
 #pragma once
-#include "types.h"
+#include "utility/types.h"
 
 namespace utility {
 	template<typename type, typename stream_type>

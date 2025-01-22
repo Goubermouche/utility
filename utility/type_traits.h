@@ -1,5 +1,7 @@
 #pragma once
 
+// random tidbits lifted from STL's type_traits.h
+
 namespace utility {
 	template<typename type>
 	struct remove_pointer {
@@ -24,6 +26,51 @@ namespace utility {
 		using element_type = type;
 		using _Const_thru_ref_type = const type;
 	};
+
+  template<bool, typename ty = void>
+  struct enable_if {};
+
+  template<typename ty>
+  struct enable_if<true, ty> { using type = ty; };
+
+  template<bool condition, typename type = void>
+  using enable_if_t = typename enable_if<condition, type>::type;
+
+  template<typename ty, ty val>
+  struct integral_constant {
+		static constexpr ty value = val;
+		using value_type = ty;
+		using type = integral_constant<ty, val>;
+		constexpr operator value_type() const noexcept { return value; }
+
+#ifdef __cpp_lib_integral_constant_callable
+		constexpr value_type operator()() const noexcept { return value; }
+#endif
+	};
+
+	template<bool val>
+	using __bool_constant = integral_constant<bool, val>;
+
+  using true_type =  __bool_constant<true>;
+  using false_type = __bool_constant<false>;
+
+  template<typename type>
+  struct is_void : public false_type { };
+
+  template<>
+  struct is_void<void> : public true_type { };
+
+  template<>
+	struct is_void<const void> : public true_type { };
+
+  template<>
+  struct is_void<volatile void> : public true_type { };
+
+  template<>
+  struct is_void<const volatile void> : public true_type { };
+
+	template <typename type>
+  inline constexpr bool is_void_v = is_void<type>::value;
 
 	template <class type>
 	struct remove_reference<type&> {

@@ -1,7 +1,6 @@
 #pragma once
-#include "../containers/dynamic_array.h"
-#include "filepath.h"
-#include <cstdio>
+#include "utility/containers/dynamic_array.h"
+#include "utility/system/filepath.h"
 
 namespace utility {
 	struct directory {
@@ -101,7 +100,19 @@ namespace utility {
 			closedir(dir);
 			return result;
 		}
+
+		static auto exists(const filepath& path) -> bool {
+			DIR* dir = opendir(path.get_data());
+
+			if(dir) {
+				closedir(dir);
+				return true;
+			} else {
+				return false;
+			}
+		}
 	};
+
 	struct file {
 #ifdef SYSTEM_WINDOWS
 		static auto exists(const filepath& path) -> bool {

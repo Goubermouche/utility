@@ -66,16 +66,16 @@ inline constexpr __enum operator ~ (__enum a) noexcept { return __enum(~((std::u
 inline constexpr __enum operator ^ (__enum a, __enum b) noexcept { return __enum(((std::underlying_type_t<__enum>)a) ^ ((std::underlying_type_t<__enum>)b)); } \
 inline __enum &operator ^= (__enum &a, __enum b) noexcept { return (__enum &)(((std::underlying_type_t<__enum> &)a) ^= ((std::underlying_type_t<__enum>)b)); } \
 
-#define INTEGRAL_ENUM(__enum) \
-template<typename other_enum_type> \
+#define INTEGRAL_ENUM(__enum)                                                                                                                                                                           \
+template<typename other_enum_type>                                                                                                                                                                      \
 inline constexpr std::underlying_type_t<__enum> operator | (__enum enum_a, other_enum_type enum_b) { return (std::underlying_type_t<__enum>)enum_a | (std::underlying_type_t<other_enum_type>)enum_b; } \
-inline constexpr std::underlying_type_t<__enum> operator | (__enum e, std::underlying_type_t<__enum> value) { return (std::underlying_type_t<__enum>)e | value; } \
-inline constexpr std::underlying_type_t<__enum> operator | (std::underlying_type_t<__enum> value, __enum e) { return value | (std::underlying_type_t<__enum>)e; } \
-inline constexpr std::underlying_type_t<__enum> operator & (__enum e, std::underlying_type_t<__enum> value) { return (std::underlying_type_t<__enum>)e & value; } \
-inline constexpr std::underlying_type_t<__enum> operator & (std::underlying_type_t<__enum> value, __enum e) { return value & (std::underlying_type_t<__enum>)e; } \
-inline constexpr std::underlying_type_t<__enum> operator << (std::underlying_type_t<__enum> value, __enum e) { return value << (std::underlying_type_t<__enum>)e; } \
-inline constexpr std::underlying_type_t<__enum> operator + (__enum e, std::underlying_type_t<__enum> value) { return (std::underlying_type_t<__enum>)e + value; } \
-inline constexpr std::underlying_type_t<__enum> operator + (std::underlying_type_t<__enum> value, __enum e) { return value + (std::underlying_type_t<__enum>)e; } \
-inline constexpr std::underlying_type_t<__enum> operator ^ (__enum e, std::underlying_type_t<__enum> value) { return (std::underlying_type_t<__enum>)e ^ value; } \
-inline constexpr std::underlying_type_t<__enum> operator ^ (std::underlying_type_t<__enum> value, __enum e) { return value ^ (std::underlying_type_t<__enum>)e; } \
-inline constexpr bool operator == (std::underlying_type_t<__enum> value, __enum e) { return value == (std::underlying_type_t<__enum>)e; } \
+inline constexpr std::underlying_type_t<__enum> operator | (__enum e, std::underlying_type_t<__enum> value) { return (std::underlying_type_t<__enum>)e | value; }                                       \
+inline constexpr std::underlying_type_t<__enum> operator | (std::underlying_type_t<__enum> value, __enum e) { return value | (std::underlying_type_t<__enum>)e; }                                       \
+inline constexpr std::underlying_type_t<__enum> operator & (__enum e, std::underlying_type_t<__enum> value) { return (std::underlying_type_t<__enum>)e & value; }                                       \
+inline constexpr std::underlying_type_t<__enum> operator & (std::underlying_type_t<__enum> value, __enum e) { return value & (std::underlying_type_t<__enum>)e; }                                       \
+inline constexpr std::underlying_type_t<__enum> operator << (std::underlying_type_t<__enum> value, __enum e) { return value << (std::underlying_type_t<__enum>)e; }                                     \
+inline constexpr std::underlying_type_t<__enum> operator + (__enum e, std::underlying_type_t<__enum> value) { return (std::underlying_type_t<__enum>)e + value; }                                       \
+inline constexpr std::underlying_type_t<__enum> operator + (std::underlying_type_t<__enum> value, __enum e) { return value + (std::underlying_type_t<__enum>)e; }                                       \
+inline constexpr std::underlying_type_t<__enum> operator ^ (__enum e, std::underlying_type_t<__enum> value) { return (std::underlying_type_t<__enum>)e ^ value; }                                       \
+inline constexpr std::underlying_type_t<__enum> operator ^ (std::underlying_type_t<__enum> value, __enum e) { return value ^ (std::underlying_type_t<__enum>)e; }                                       \
+inline constexpr bool operator == (std::underlying_type_t<__enum> value, __enum e) { return value == (std::underlying_type_t<__enum>)e; }

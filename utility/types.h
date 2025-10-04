@@ -11,6 +11,7 @@
 #include <map>
 #include <queue>
 #include <string>
+#include <cstring>
 #include <type_traits>
 #include <unordered_map>
 #include <unordered_set>
